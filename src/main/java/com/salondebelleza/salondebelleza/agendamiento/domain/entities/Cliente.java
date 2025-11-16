@@ -1,9 +1,12 @@
 package com.salondebelleza.salondebelleza.agendamiento.domain.entities;
 
+import java.util.List;
+
 public class Cliente {
-    long idCliente;
-    String nombre;
-    String apellido;
-    String documento;
-    String telefono;
+    private long idCliente;
+    private String nombre;
+    private String apellido;
+    private String documento;
+    private String telefono;
+    List<Cita> citas;
 }
