@@ -21,9 +21,9 @@ public class ClienteEntity {
 
     private String apellido;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String documento;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String telefono;
 }

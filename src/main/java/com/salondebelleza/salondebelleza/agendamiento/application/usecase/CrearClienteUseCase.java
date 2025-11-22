@@ -3,6 +3,7 @@ package com.salondebelleza.salondebelleza.agendamiento.application.usecase;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.ClienteResponse;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.CrearClienteRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.mapper.ClienteDTOMapper;
+import com.salondebelleza.salondebelleza.agendamiento.domain.exception.ClienteExistenteException;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.ClienteRepositoryPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,11 +22,11 @@ public class CrearClienteUseCase {
 
     public ClienteResponse execute(CrearClienteRequest request){
         this.clienteRepositoryPort.findByTelefono(request.telefono()).ifPresent(
-                e -> {throw new IllegalArgumentException("El telefono ya existe");}
+                e -> {throw new ClienteExistenteException("El telefono " + request.telefono() + " ya existe");}
         );
 
         this.clienteRepositoryPort.findByDocumento(request.documento()).ifPresent(
-                e -> {throw new IllegalArgumentException("El documento ya existe");}
+                e -> {throw new ClienteExistenteException("El documento " + request.documento() + " ya existe");}
         );
 
         return this.clienteDTOMapper
