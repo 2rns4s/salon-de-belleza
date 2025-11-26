@@ -32,7 +32,7 @@ public class ActualizarClienteUseCase {
         Optional<Cliente> clienteExistente = this.clienteRepositoryPort.findByTelefono(request.telefono());
 
         if (clienteExistente.isPresent()){
-            if (idCliente != clienteExistente.get().getIdCliente()){
+            if (!idCliente.equals(clienteExistente.get().getIdCliente())){
                 throw new ClienteExistenteException("El telefono " + request.telefono() + " ya existe");
             }
         }
