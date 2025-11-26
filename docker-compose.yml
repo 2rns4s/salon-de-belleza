@@ -1,15 +1,15 @@
 services:
   postgres:
-    image: 'postgres:18.1-alpine'
+    image: 'postgres:17'
     container_name: salon_db_dev
+    environment:
+      POSTGRES_DB: salon_de_belleza_db
+      POSTGRES_USER: salon_admin
+      POSTGRES_PASSWORD: salon_password
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_DB=salon_de_belleza_db
-      - POSTGRES_USER=salon_admin
-      - POSTGRES_PASSWORD=salon_password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     restart: always
 
 volumes:
