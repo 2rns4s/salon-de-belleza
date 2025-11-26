@@ -2,7 +2,6 @@ package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.pe
 
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data.ClienteEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;

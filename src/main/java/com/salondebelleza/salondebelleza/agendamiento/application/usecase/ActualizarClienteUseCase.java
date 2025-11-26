@@ -32,7 +32,7 @@ public class ActualizarClienteUseCase {
         Optional<Cliente> clienteExistente = this.clienteRepositoryPort.findByTelefono(request.telefono());
 
         if (clienteExistente.isPresent()){
-            if (cliente.getIdCliente() != clienteExistente.get().getIdCliente()){
+            if (idCliente != clienteExistente.get().getIdCliente()){
                 throw new ClienteExistenteException("El telefono " + request.telefono() + " ya existe");
             }
         }
@@ -40,6 +40,7 @@ public class ActualizarClienteUseCase {
         cliente.setNombre(request.nombre());
         cliente.setApellido(request.apellido());
         cliente.setTelefono(request.telefono());
+
 
         return this.clienteDTOMapper.toClienteResponse(this.clienteRepositoryPort.save(cliente));
     }

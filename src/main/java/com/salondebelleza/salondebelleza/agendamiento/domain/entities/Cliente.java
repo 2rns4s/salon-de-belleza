@@ -10,7 +10,7 @@ import java.util.List;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class Cliente {
-    private long idCliente;
+    private Long idCliente;
     private String nombre;
     private String apellido;
     private String documento;

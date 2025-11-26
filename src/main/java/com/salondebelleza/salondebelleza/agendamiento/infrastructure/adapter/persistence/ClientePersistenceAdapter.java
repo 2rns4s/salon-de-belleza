@@ -26,10 +26,13 @@ public class ClientePersistenceAdapter implements ClienteRepositoryPort {
 
     @Override
     public Cliente save(Cliente cliente) {
+        ClienteEntity entity = clienteMapper.toClienteEntity(cliente);
+
+        if(cliente.getIdCliente() == null || cliente.getIdCliente() == 0){
+            entity.setIdCliente(null);
+        }
         return clienteMapper
-                .toCliente(clienteRepository
-                        .save(clienteMapper
-                                .toClienteEntity(cliente)));
+                .toCliente(clienteRepository.save(entity));
     }
 
     @Override
