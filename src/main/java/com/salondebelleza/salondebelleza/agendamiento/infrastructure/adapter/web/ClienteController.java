@@ -1,8 +1,8 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web;
 
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.ActualizarClienteRequest;
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.ClienteResponse;
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.CrearClienteRequest;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ActualizarClienteRequest;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ClienteResponse;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.CrearClienteRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.usecase.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

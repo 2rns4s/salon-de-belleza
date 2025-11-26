@@ -1,7 +1,7 @@
 package com.salondebelleza.salondebelleza.agendamiento.application.usecase;
 
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.ClienteResponse;
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.CrearClienteRequest;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ClienteResponse;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.CrearClienteRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.mapper.ClienteDTOMapper;
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.ClienteExistenteException;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.ClienteRepositoryPort;
