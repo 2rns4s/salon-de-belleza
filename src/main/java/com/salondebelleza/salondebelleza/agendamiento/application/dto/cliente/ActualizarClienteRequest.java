@@ -1,11 +1,12 @@
 package com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "Datos permitidos para la actulizacion del cliente. No se permite actualizar documento e ID")
+@Tag(name = "Gestion de Clientes", description = "Controlador para operaciones de clientes")
 public record ActualizarClienteRequest(
 
         @Schema(description = "Nombre del cliente", example = "Juan")
