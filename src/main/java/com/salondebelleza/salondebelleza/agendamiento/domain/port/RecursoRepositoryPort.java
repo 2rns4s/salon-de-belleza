@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface RecursoRepositoryPort {
 
-    void save(Recurso recurso);
+    Recurso save(Recurso recurso);
 
     Optional<Recurso> findById(long idRecurso);
 

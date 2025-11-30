@@ -10,7 +10,7 @@ import java.util.List;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class Recurso {
-    private long idRecurso;
+    private Long idRecurso;
     private String nombre;
     private int cantidadTotal;
     List<ServicioRecurso> serviciosRecursos;
