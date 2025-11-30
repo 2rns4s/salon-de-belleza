@@ -1,4 +1,4 @@
-package com.salondebelleza.salondebelleza.agendamiento.application.usecase;
+package com.salondebelleza.salondebelleza.agendamiento.application.usecase.cliente;
 
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ActualizarClienteRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ClienteResponse;

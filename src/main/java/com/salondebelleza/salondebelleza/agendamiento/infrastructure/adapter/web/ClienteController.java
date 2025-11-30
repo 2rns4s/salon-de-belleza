@@ -3,7 +3,7 @@ package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.we
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ActualizarClienteRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.ClienteResponse;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cliente.CrearClienteRequest;
-import com.salondebelleza.salondebelleza.agendamiento.application.usecase.*;
+import com.salondebelleza.salondebelleza.agendamiento.application.usecase.cliente.*;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

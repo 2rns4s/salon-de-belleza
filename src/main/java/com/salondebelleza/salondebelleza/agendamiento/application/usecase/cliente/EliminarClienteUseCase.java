@@ -1,4 +1,4 @@
-package com.salondebelleza.salondebelleza.agendamiento.application.usecase;
+package com.salondebelleza.salondebelleza.agendamiento.application.usecase.cliente;
 
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.ClienteNoEncontradoException;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.ClienteRepositoryPort;
