@@ -8,6 +8,7 @@ import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.per
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -22,6 +23,13 @@ public class RecursoPersistenceAdapter implements RecursoRepositoryPort {
         this.recursoMapper = recursoMapper;
     }
 
+
+    @Override
+    public List<Recurso> findAll() {
+        return this.recursoRepository.findAll()
+                .stream().map(recursoMapper::toRecurso)
+                .toList();
+    }
 
     @Override
     public Recurso save(Recurso recurso) {
