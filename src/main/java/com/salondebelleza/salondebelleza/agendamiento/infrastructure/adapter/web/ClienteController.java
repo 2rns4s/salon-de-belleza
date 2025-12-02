@@ -58,7 +58,7 @@ public class ClienteController {
             @ApiResponse(responseCode = "200", description = "Busca cliente usando su ID",
                     content = @Content(schema = @Schema(implementation = ClienteResponse.class))),
             @ApiResponse(responseCode = "404", description = "Cliente no encontrado por su ID",
-                    content = @Content(schema = @Schema(hidden = true))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor",
                     content = @Content(schema = @Schema(hidden = true)))
     })
