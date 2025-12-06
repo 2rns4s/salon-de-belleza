@@ -13,6 +13,6 @@ public class Recurso {
     private Long idRecurso;
     private String nombre;
     private int cantidadTotal;
-    List<ServicioRecurso> serviciosRecursos;
+    List<ServicioRecursos> serviciosRecursos;
     List<CitaRecurso> citaRecursos;
 }
