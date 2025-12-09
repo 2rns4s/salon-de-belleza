@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,14 +18,17 @@ public class ServicioEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_servicio")
-    Long idServicio;
+    private Long idServicio;
 
     @Column(unique = true, nullable = false)
-    String nombre;
+    private String nombre;
 
     @Column(nullable = false)
-    int duracion;
+    private int duracion;
 
     @OneToMany(mappedBy = "servicioEntity", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ServicioRecursosEntity> servicioRecursos;
+    List<ServicioRecursosEntity> servicioRecursos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "servicioEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<CalificacionEntity> calificaciones = new ArrayList<>();
 }
