@@ -1,9 +1,6 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web.exception;
 
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.ClienteExistenteException;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.ClienteNoEncontradoException;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.RecursoExistenteException;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.RecursoNoEncontradoException;
+import com.salondebelleza.salondebelleza.agendamiento.domain.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -25,6 +22,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ClienteExistenteException.class)
     public ResponseEntity<ErrorResponse> handleClienteExistenteException(ClienteExistenteException ex) {
 
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(ServicioNoEncontradoException.class)
+    public ResponseEntity<ErrorResponse> handleServicioNoEncontradoException(ServicioNoEncontradoException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(ServicioExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleServicioExistenteException(ServicioExistenteException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
