@@ -4,6 +4,7 @@ import com.salondebelleza.salondebelleza.agendamiento.domain.entities.Servicio;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.ServicioRecursos;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data.ServicioEntity;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data.ServicioRecursosEntity;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -17,7 +18,7 @@ public interface ServicioMapper {
     @Mapping(ignore = true, target = "citas")
     Servicio toServicio(ServicioEntity servicioEntity);
 
-
+    @Mapping(ignore = true, target = "calificaciones")
     ServicioEntity toServicioEntity(Servicio servicio);
 
     @Mapping(target = "idServicioRecursos", ignore = true)
