@@ -11,6 +11,8 @@ import org.mapstruct.Mapping;
 public interface ServicioMapper {
 
     @Mapping(source = "recursoEntity.idRecurso", target = "idRecurso")
+    @Mapping(source = "servicioEntity.idServicio", target = "idServicio")
+    @Mapping(source = "recursoEntity.nombre", target = "nombreRecurso")
     ServicioRecursos toServicioRecursos(ServicioRecursosEntity servicioRecursosEntity);
 
     @Mapping(ignore = true, target = "calificaciones")
