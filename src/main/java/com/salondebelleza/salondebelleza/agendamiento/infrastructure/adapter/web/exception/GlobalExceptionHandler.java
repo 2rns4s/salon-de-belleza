@@ -21,8 +21,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClienteExistenteException.class)
     public ResponseEntity<ErrorResponse> handleClienteExistenteException(ClienteExistenteException ex) {
-
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(EmpleadoExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleEmpleadoExistenteException(EmpleadoExistenteException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(EmpleadoNoExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleEmpleadoNoExistenteException(EmpleadoNoExistenteException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ServicioNoEncontradoException.class)
