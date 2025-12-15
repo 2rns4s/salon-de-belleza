@@ -11,8 +11,8 @@ import java.time.LocalTime;
 @Setter @Getter
 @AllArgsConstructor @NoArgsConstructor
 public class FranjaLaboral {
-    private int idFranjaLaboral;
-    private int idEmpleado;
+    private Long idFranjaLaboral;
+    private Long idEmpleado;
     private DayOfWeek dia;
     private LocalTime horaInicio;
     private LocalTime horaFin;

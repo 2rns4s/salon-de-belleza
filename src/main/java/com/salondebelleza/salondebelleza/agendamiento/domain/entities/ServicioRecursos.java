@@ -8,9 +8,9 @@ import lombok.Setter;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class ServicioRecursos {
-    private long idServicioRecurso;
-    private long idServicio;
-    private long idRecurso;
+    private Long idServicioRecursos;
+    private Long idServicio;
+    private Long idRecurso;
     private String nombreRecurso;
     private int cantidadRequerida;
 }

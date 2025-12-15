@@ -11,7 +11,7 @@ import java.util.List;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class Empleado {
-    long idEmpleado;
+    Long idEmpleado;
     String nombre;
     String apellido;
     String correo;

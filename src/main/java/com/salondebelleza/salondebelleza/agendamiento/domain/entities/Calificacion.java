@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class Calificacion {
-    private long idCalificacion;
-    private long idEmpleado;
-    private long idServicio;
+    private Long idCalificacion;
+    private Long idEmpleado;
+    private Long idServicio;
 }
