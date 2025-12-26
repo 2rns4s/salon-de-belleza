@@ -22,7 +22,7 @@ public class CrearRecursoUseCase {
 
     public RecursoResponse execute(CrearRecursoRequest request) {
 
-        this.recursoRepositoryPort.findByNombre(request.nombre()).ifPresent(
+        this.recursoRepositoryPort.findOneByNombreIgnoreCase(request.nombre()).ifPresent(
                 recursoExistente -> {throw new RecursoExistenteException("El recurso " + request.nombre() + " ya existe");}
         );
 

@@ -29,7 +29,7 @@ public class ActualizarRecursoUseCase {
                 () -> new RecursoNoEncontradoException("Recurso con id " + idRecurso + " no encontrado")
         );
 
-        Optional<Recurso> nombreExistente = this.recursoRepositoryPort.findByNombre(request.nombre());
+        Optional<Recurso> nombreExistente = this.recursoRepositoryPort.findOneByNombreIgnoreCase(request.nombre());
 
         if (nombreExistente.isPresent()){
             if (!idRecurso.equals(nombreExistente.get().getIdRecurso())){

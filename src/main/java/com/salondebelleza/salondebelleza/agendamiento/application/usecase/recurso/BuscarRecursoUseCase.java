@@ -7,8 +7,6 @@ import com.salondebelleza.salondebelleza.agendamiento.domain.port.RecursoReposit
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class BuscarRecursoUseCase {
 
@@ -28,7 +26,7 @@ public class BuscarRecursoUseCase {
     }
 
     public RecursoResponse executeByNombre(String nombre){
-        return this.recursoDTOMapper.toRecursoResponse(this.recursoRepositoryPort.findByNombre(nombre).orElseThrow(
+        return this.recursoDTOMapper.toRecursoResponse(this.recursoRepositoryPort.findOneByNombreIgnoreCase(nombre).orElseThrow(
                 () -> new RecursoNoEncontradoException("Recurso con nombre " + nombre + " no encontrado")
         ));
     }
