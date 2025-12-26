@@ -14,5 +14,5 @@ public class Recurso {
     private String nombre;
     private int cantidadTotal;
     List<ServicioRecursos> serviciosRecursos;
-    List<CitaRecurso> citaRecursos;
+    List<CitaRecursos> citaRecursos;
 }

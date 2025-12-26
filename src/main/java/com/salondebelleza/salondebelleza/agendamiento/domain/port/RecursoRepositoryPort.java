@@ -13,7 +13,9 @@ public interface RecursoRepositoryPort {
 
     Optional<Recurso> findById(long idRecurso);
 
-    Optional<Recurso> findByNombre(String nombre);
+    List<Recurso> findByNombreIgnoreCase(String nombre);
+
+    Optional<Recurso> findOneByNombreIgnoreCase (String nombre);
 
     void delete(Long idRecurso);
 

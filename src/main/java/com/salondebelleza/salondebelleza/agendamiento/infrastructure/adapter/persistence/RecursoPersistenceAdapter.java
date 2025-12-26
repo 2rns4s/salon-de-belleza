@@ -50,9 +50,17 @@ public class RecursoPersistenceAdapter implements RecursoRepositoryPort {
     }
 
     @Override
-    public Optional<Recurso> findByNombre(String nombre) {
-        return this.recursoRepository.findByNombreIgnoreCase(nombre)
+    public Optional<Recurso> findOneByNombreIgnoreCase(String nombre) {
+        return this.recursoRepository.findFirstByNombreContainsIgnoreCase(nombre)
                 .map(recursoMapper::toRecurso);
+    }
+
+    @Override
+    public List<Recurso> findByNombreIgnoreCase(String nombre) {
+        return this.recursoRepository.findByNombreIgnoreCase(nombre)
+                .stream()
+                .map(recursoMapper::toRecurso)
+                .toList();
     }
 
     @Override
