@@ -24,6 +24,16 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(CitaExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleCitaExistenteException(CitaExistenteException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(CitaNoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handleCitaNoEncontradaException(CitaNoEncontradaException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(EmpleadoExistenteException.class)
     public ResponseEntity<ErrorResponse> handleEmpleadoExistenteException(EmpleadoExistenteException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
@@ -51,6 +61,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RecursoExistenteException.class)
     public ResponseEntity<ErrorResponse> handleRecursoExistenteException(RecursoExistenteException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(SolapamientoException.class)
+    public ResponseEntity<ErrorResponse> handleSolapamientoException(SolapamientoException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
