@@ -63,4 +63,9 @@ public class CitaPersistenceAdapter implements CitaRepositoryPort {
     public boolean existCitaSolapadaParaRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         return this.citaRepository.existsCitaSolapadaParaRecurso(idRecurso, fechaInicio, fechaFin);
     }
+
+    @Override
+    public int contarCitasSolapadasPorRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin) {
+        return this.citaRepository.contarCitasSolapadasPorRecurso(idRecurso, fechaInicio, fechaFin);
+    }
 }

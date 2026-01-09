@@ -67,4 +67,10 @@ public class RecursoPersistenceAdapter implements RecursoRepositoryPort {
     public void delete(Long idRecurso) {
         recursoRepository.deleteById(idRecurso);
     }
+
+    @Override
+    public Optional<Recurso> findByIdRecursoWithLock(Long idRecurso) {
+        return this.recursoRepository.findByIdRecursoWithLock(idRecurso)
+                .map(recursoMapper::toRecurso);
+    }
 }

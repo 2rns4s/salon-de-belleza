@@ -58,4 +58,10 @@ public class EmpleadoPersistenceAdapter implements EmpleadoRepositoryPort {
     public boolean existsByCorreo(String correo) {
         return this.empleadoRepository.existsByCorreo(correo);
     }
+
+    @Override
+    public Optional<Empleado> findByIdEmpleadoWithLock(Long idEmpleado) {
+        return this.empleadoRepository.findByIdEmpleadoWithLock(idEmpleado)
+                .map(empleadoMapper::toEmpleado);
+    }
 }
