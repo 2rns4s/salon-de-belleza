@@ -4,8 +4,11 @@ import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CitaR
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CrearCitaRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.mapper.CitaDTOMapper;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.*;
+import com.salondebelleza.salondebelleza.agendamiento.domain.exception.EmpleadoNoExistenteException;
+import com.salondebelleza.salondebelleza.agendamiento.domain.exception.RecursoNoEncontradoException;
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.SolapamientoException;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.CitaRepositoryPort;
+import com.salondebelleza.salondebelleza.agendamiento.domain.port.EmpleadoRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.RecursoRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.ServicioRepositoryPort;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +26,15 @@ public class CrearCitaUseCase {
     private final CitaDTOMapper citaDTOMapper;
     private final RecursoRepositoryPort recursoRepositoryPort;
     private final ServicioRepositoryPort servicioRepositoryPort;
+    private final EmpleadoRepositoryPort empleadoRepositoryPort;
 
     @Autowired
-    public CrearCitaUseCase(CitaRepositoryPort citaRepositoryPort, CitaDTOMapper citaDTOMapper, RecursoRepositoryPort recursoRepositoryPort, ServicioRepositoryPort servicioRepositoryPort) {
+    public CrearCitaUseCase(CitaRepositoryPort citaRepositoryPort, CitaDTOMapper citaDTOMapper, RecursoRepositoryPort recursoRepositoryPort, ServicioRepositoryPort servicioRepositoryPort, EmpleadoRepositoryPort empleadoRepositoryPort) {
         this.citaRepositoryPort = citaRepositoryPort;
         this.citaDTOMapper = citaDTOMapper;
         this.recursoRepositoryPort = recursoRepositoryPort;
         this.servicioRepositoryPort = servicioRepositoryPort;
+        this.empleadoRepositoryPort = empleadoRepositoryPort;
     }
 
     @Transactional
@@ -42,6 +47,9 @@ public class CrearCitaUseCase {
         LocalDateTime fechaInicio = request.fechaInicio();
         LocalDateTime fechaFin = fechaInicio.plusMinutes(servicio.getDuracion());
 
+        this.empleadoRepositoryPort.findByIdEmpleadoWithLock(request.idEmpleado())
+                .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado con id: " + request.idEmpleado()));
+
         // 2. Validar Disponibilidad del EMPLEADO
         if (citaRepositoryPort.existCitaSolapadaParaEmpleado(request.idEmpleado(), fechaInicio, fechaFin)) {
             throw new SolapamientoException("El empleado no está disponible en el horario seleccionado.");
@@ -50,34 +58,36 @@ public class CrearCitaUseCase {
         // 3. Algoritmo de Asignación Automática de Recursos Físicos
         List<CitaRecursos> recursosAAsignar = new ArrayList<>();
 
-        // Para cada requisito del servicio (Ej: "Silla", "Lavacabezas")
         if (servicio.getServicioRecursos() != null) {
             for (ServicioRecursos requisito : servicio.getServicioRecursos()) {
 
-                // A. Buscamos TODOS los recursos físicos que coincidan con el nombre (Pool de recursos)
-                List<Recurso> candidatos = recursoRepositoryPort.findByNombreIgnoreCase(requisito.getNombreRecurso());
+                // Paso A: Obtenemos el recurso base (Ej: ID 1 "Silla", Total: 5)
+                // OJO: Aquí asumimos que el servicio ya tiene vinculado el recurso real.
+                // Si 'requisito' es solo una referencia intermedia, buscamos el recurso real:
+                Recurso recursoBase = recursoRepositoryPort.findByIdRecursoWithLock(requisito.getIdRecurso())
+                        .orElseThrow(() -> new RecursoNoEncontradoException("Recurso no encontrado"));
 
-                Recurso recursoDisponible = null;
+                // Paso B: Contamos cuántas citas están usando este recurso AHORA MISMO
+                int usoActual = citaRepositoryPort.contarCitasSolapadasPorRecurso(
+                        recursoBase.getIdRecurso(),
+                        fechaInicio,
+                        fechaFin
+                );
 
-                // B. Buscamos el primero que esté libre en ese horario
-                for (Recurso candidato : candidatos) {
-                    boolean ocupado = citaRepositoryPort.existCitaSolapadaParaRecurso(
-                            candidato.getIdRecurso(), fechaInicio, fechaFin);
-
-                    if (!ocupado) {
-                        recursoDisponible = candidato;
-                        break; // ¡Encontramos uno libre! Dejamos de buscar.
-                    }
+                // Paso C: La Lógica Matemática
+                // Si hay 3 ocupados y el total es 5, ¡podemos agendar! (3 < 5)
+                if (usoActual >= recursoBase.getCantidadTotal()) {
+                    throw new SolapamientoException(
+                            "No hay disponibilidad de: " + recursoBase.getNombre() +
+                                    ". (Ocupados: " + usoActual + "/" + recursoBase.getCantidadTotal() + ")"
+                    );
                 }
 
-                // C. Si no encontramos ninguno libre, fallamos
-                if (recursoDisponible == null) {
-                    throw new SolapamientoException("No hay disponibilidad de: " + requisito.getNombreRecurso() + " para este horario.");
-                }
-
-                // D. Preparamos la asignación
+                // Paso D: Asignamos el MISMO ID (1).
+                // La base de datos tendrá muchas filas en 'cita_recursos' apuntando al recurso 1,
+                // pero el 'count' de arriba controlará que no excedamos el límite.
                 CitaRecursos asignacion = new CitaRecursos();
-                asignacion.setIdRecurso(recursoDisponible.getIdRecurso());
+                asignacion.setIdRecurso(recursoBase.getIdRecurso());
                 recursosAAsignar.add(asignacion);
             }
         }
