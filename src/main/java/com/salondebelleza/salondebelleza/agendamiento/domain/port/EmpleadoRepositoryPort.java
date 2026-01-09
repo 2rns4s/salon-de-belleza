@@ -16,4 +16,6 @@ public interface EmpleadoRepositoryPort {
     void deleteById(long idEmpleado);
 
     boolean existsByCorreo(String correo);
+
+    Optional<Empleado> findByIdEmpleadoWithLock(Long idEmpleado);
 }

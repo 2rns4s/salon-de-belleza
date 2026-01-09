@@ -19,4 +19,6 @@ public interface RecursoRepositoryPort {
 
     void delete(Long idRecurso);
 
+    Optional<Recurso> findByIdRecursoWithLock(Long idRecurso);
+
 }
