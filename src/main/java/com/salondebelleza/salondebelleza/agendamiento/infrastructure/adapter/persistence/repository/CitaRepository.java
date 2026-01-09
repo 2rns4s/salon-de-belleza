@@ -36,4 +36,18 @@ public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
             @Param("fechaFin") LocalDateTime fechaFin
     );
 
+    @Query("""
+        SELECT COUNT(c) 
+        FROM CitaEntity c 
+        JOIN c.recursosReservados cr
+        WHERE cr.recursoEntity.idRecurso = :idRecurso
+        AND c.estado <> 'CANCELADA'
+        AND (c.fechaInicio < :fechaFin AND c.fechaFin > :fechaInicio)
+    """)
+    int contarCitasSolapadasPorRecurso(
+            @Param("idRecurso") Long idRecurso,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin
+    );
+
 }
