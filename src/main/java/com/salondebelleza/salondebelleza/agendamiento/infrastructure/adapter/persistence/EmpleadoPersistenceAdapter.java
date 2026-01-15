@@ -64,4 +64,9 @@ public class EmpleadoPersistenceAdapter implements EmpleadoRepositoryPort {
         return this.empleadoRepository.findByIdEmpleadoWithLock(idEmpleado)
                 .map(empleadoMapper::toEmpleado);
     }
+
+    @Override
+    public boolean existByIdEmpleado(Long idEmpleado) {
+        return this.empleadoRepository.existByIdEmpleado(idEmpleado);
+    }
 }

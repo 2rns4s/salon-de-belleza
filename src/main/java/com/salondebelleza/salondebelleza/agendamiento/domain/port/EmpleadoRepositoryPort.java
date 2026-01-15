@@ -18,4 +18,6 @@ public interface EmpleadoRepositoryPort {
     boolean existsByCorreo(String correo);
 
     Optional<Empleado> findByIdEmpleadoWithLock(Long idEmpleado);
+
+    boolean existByIdEmpleado(Long idEmpleado);
 }
