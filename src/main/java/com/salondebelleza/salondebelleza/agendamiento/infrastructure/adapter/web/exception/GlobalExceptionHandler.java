@@ -34,6 +34,21 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(UsuarioExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleUsuarioExistenteException(UsuarioExistenteException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(UsuarioNoExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleUsuarioNoExistenteException(UsuarioNoExistenteException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(AccesoDenegadoException.class)
+    public ResponseEntity<ErrorResponse> handleAccesoDenegadoException(AccesoDenegadoException ex) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(EmpleadoExistenteException.class)
     public ResponseEntity<ErrorResponse> handleEmpleadoExistenteException(EmpleadoExistenteException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
