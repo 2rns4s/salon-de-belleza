@@ -67,6 +67,6 @@ public class EmpleadoPersistenceAdapter implements EmpleadoRepositoryPort {
 
     @Override
     public boolean existByIdEmpleado(Long idEmpleado) {
-        return this.empleadoRepository.existByIdEmpleado(idEmpleado);
+        return this.empleadoRepository.existsByIdEmpleado(idEmpleado);
     }
 }

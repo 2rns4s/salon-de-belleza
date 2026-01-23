@@ -24,5 +24,5 @@ public interface EmpleadoRepository extends JpaRepository<EmpleadoEntity, Long> 
 
     List<EmpleadoEntity> findAll();
 
-    boolean existByIdEmpleado(Long idEmpleado);
+    boolean existsByIdEmpleado(Long idEmpleado);
 }
