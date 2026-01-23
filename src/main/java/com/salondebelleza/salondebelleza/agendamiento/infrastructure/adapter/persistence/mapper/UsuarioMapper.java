@@ -11,9 +11,11 @@ import org.mapstruct.Named;
 public interface UsuarioMapper {
 
     @Mapping(source = "empleadoEntity.idEmpleado", target = "idEmpleado")
+    @Mapping(source = "mfaEnabled", target = "mfaEnable")
     Usuario toUsuario(UsuarioEntity usuarioEntity);
 
     @Mapping(source = "idEmpleado", target = "empleadoEntity", qualifiedByName = "idToEmpleadoEntity")
+    @Mapping(source = "mfaEnable", target = "mfaEnabled")
     UsuarioEntity toUsuarioEntity(Usuario usuario);
 
     @Named("idToEmpleadoEntity")

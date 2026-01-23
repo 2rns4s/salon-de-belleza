@@ -60,4 +60,10 @@ public class UsuarioPersistenceAdapter implements UsuarioRepositoryPort {
         return this.usuarioRepository.existsUsuarioByNombreUsuario(nombreUsuario);
     }
 
+    @Override
+    public Optional<Usuario> findByNombreUsuario(String nombreUsuario) {
+        return this.usuarioRepository.findByNombreUsuario(nombreUsuario)
+                .map(usuarioMapper::toUsuario);
+    }
+
 }

@@ -12,4 +12,5 @@ public interface UsuarioRepositoryPort {
     List<Usuario> findAll();
     boolean existUsuarioByIdEmpleado(Long idEmpleado);
     boolean existUsuarioByNombreUsuario(String nombreUsuario);
+    Optional<Usuario> findByNombreUsuario(String nombreUsuario);
 }
