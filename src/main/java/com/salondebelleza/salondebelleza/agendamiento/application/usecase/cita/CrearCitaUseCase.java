@@ -4,18 +4,18 @@ import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CitaR
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CrearCitaRequest;
 import com.salondebelleza.salondebelleza.agendamiento.application.mapper.CitaDTOMapper;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.*;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.EmpleadoNoExistenteException;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.RecursoNoEncontradoException;
-import com.salondebelleza.salondebelleza.agendamiento.domain.exception.SolapamientoException;
+import com.salondebelleza.salondebelleza.agendamiento.domain.exception.*;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.CitaRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.EmpleadoRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.RecursoRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.ServicioRepositoryPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +28,24 @@ public class CrearCitaUseCase {
     private final ServicioRepositoryPort servicioRepositoryPort;
     private final EmpleadoRepositoryPort empleadoRepositoryPort;
 
+    private final LocalTime horaInicioSalon;
+    private final LocalTime horaFinSalon;
+
     @Autowired
-    public CrearCitaUseCase(CitaRepositoryPort citaRepositoryPort, CitaDTOMapper citaDTOMapper, RecursoRepositoryPort recursoRepositoryPort, ServicioRepositoryPort servicioRepositoryPort, EmpleadoRepositoryPort empleadoRepositoryPort) {
+    public CrearCitaUseCase(CitaRepositoryPort citaRepositoryPort,
+                            CitaDTOMapper citaDTOMapper,
+                            RecursoRepositoryPort recursoRepositoryPort,
+                            ServicioRepositoryPort servicioRepositoryPort,
+                            EmpleadoRepositoryPort empleadoRepositoryPort,
+                            @Value("${salon.hora-inicio-servicio}") LocalTime horaInicioSalon,
+                            @Value("${salon.hora-fin-servicio}") LocalTime horaFinSalon) {
         this.citaRepositoryPort = citaRepositoryPort;
         this.citaDTOMapper = citaDTOMapper;
         this.recursoRepositoryPort = recursoRepositoryPort;
         this.servicioRepositoryPort = servicioRepositoryPort;
         this.empleadoRepositoryPort = empleadoRepositoryPort;
+        this.horaInicioSalon = horaInicioSalon;
+        this.horaFinSalon = horaFinSalon;
     }
 
     @Transactional
@@ -42,13 +53,36 @@ public class CrearCitaUseCase {
 
         // 1. Obtener la duración del servicio para calcular la hora fin
         Servicio servicio = servicioRepositoryPort.findById(request.idServicio())
-                .orElseThrow(() -> new RuntimeException("Servicio no encontrado con id: " + request.idServicio()));
+                .orElseThrow(() -> new ServicioNoEncontradoException("Servicio no encontrado con id: " + request.idServicio()));
 
         LocalDateTime fechaInicio = request.fechaInicio();
         LocalDateTime fechaFin = fechaInicio.plusMinutes(servicio.getDuracion());
 
-        this.empleadoRepositoryPort.findByIdEmpleadoWithLock(request.idEmpleado())
-                .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado con id: " + request.idEmpleado()));
+        if (fechaInicio.toLocalTime().isBefore(horaInicioSalon) ||
+                fechaFin.toLocalTime().isAfter(horaFinSalon)) {
+            throw new CitaFueraDeHorarioException(
+                    "La cita está fuera del horario de operación del salón (" +
+                            horaInicioSalon + " - " + horaFinSalon + ")."
+            );
+        }
+
+        if (fechaInicio.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("No se pueden agendar citas en el pasado.");
+        }
+
+        Empleado empleado = this.empleadoRepositoryPort.findByIdEmpleadoWithFranjasAndLock(request.idEmpleado())
+                .orElseThrow(() -> new EmpleadoNoExistenteException("El empleado con id " + request.idEmpleado() + " no existe"));
+
+        boolean trabajaEnEsaHora = empleado.getFranjasLaborales().stream()
+                .anyMatch(franja ->
+                        franja.getDia().equals(fechaInicio.getDayOfWeek()) &&
+                                !fechaInicio.toLocalTime().isBefore(franja.getHoraInicio()) &&
+                                !fechaFin.toLocalTime().isAfter(franja.getHoraFin())
+                );
+
+        if (!trabajaEnEsaHora) {
+            throw new EmpleadoNoTrabajaEnEseHorarioException("El empleado no trabaja en el horario seleccionado.");
+        }
 
         // 2. Validar Disponibilidad del EMPLEADO
         if (citaRepositoryPort.existCitaSolapadaParaEmpleado(request.idEmpleado(), fechaInicio, fechaFin)) {
@@ -59,7 +93,12 @@ public class CrearCitaUseCase {
         List<CitaRecursos> recursosAAsignar = new ArrayList<>();
 
         if (servicio.getServicioRecursos() != null) {
-            for (ServicioRecursos requisito : servicio.getServicioRecursos()) {
+
+            List<ServicioRecursos> recursosOrdenados = servicio.getServicioRecursos().stream()
+                    .sorted((r1, r2) -> Long.compare(r1.getIdRecurso(), r2.getIdRecurso())) // Ojo: asegúrate de ordenar por el ID del RECURSO, no de la tabla intermedia
+                    .toList();
+
+            for (ServicioRecursos requisito : recursosOrdenados) {
 
                 // Paso A: Obtenemos el recurso base (Ej: ID 1 "Silla", Total: 5)
                 // OJO: Aquí asumimos que el servicio ya tiene vinculado el recurso real.
