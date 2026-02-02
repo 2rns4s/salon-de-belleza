@@ -14,6 +14,16 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CitaFueraDeHorarioException.class)
+    public ResponseEntity<ErrorResponse> handleCitaFueraDeHorarioException(CitaFueraDeHorarioException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(EmpleadoNoTrabajaEnEseHorarioException.class)
+    public ResponseEntity<ErrorResponse> handleEmpleadoNoTrabajaEnEseHorarioException(EmpleadoNoTrabajaEnEseHorarioException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(ClienteNoEncontradoException.class)
     public ResponseEntity<ErrorResponse> handleClienteNoEncontradoException(ClienteNoEncontradoException ex) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
