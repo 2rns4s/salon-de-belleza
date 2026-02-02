@@ -60,8 +60,8 @@ public class EmpleadoPersistenceAdapter implements EmpleadoRepositoryPort {
     }
 
     @Override
-    public Optional<Empleado> findByIdEmpleadoWithLock(Long idEmpleado) {
-        return this.empleadoRepository.findByIdEmpleadoWithLock(idEmpleado)
+    public Optional<Empleado> findByIdEmpleadoWithFranjasAndLock(Long idEmpleado) {
+        return this.empleadoRepository.findByIdEmpleadoWithFranjasAndLock(idEmpleado)
                 .map(empleadoMapper::toEmpleado);
     }
 

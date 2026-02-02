@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface EmpleadoRepository extends JpaRepository<EmpleadoEntity, Long> {
@@ -17,12 +16,11 @@ public interface EmpleadoRepository extends JpaRepository<EmpleadoEntity, Long> 
     Optional<EmpleadoEntity> findById(Long idEmpleado);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"franjasLaborales"})
     @Query("SELECT e FROM EmpleadoEntity e WHERE e.idEmpleado = :idEmpleado")
-    Optional<EmpleadoEntity> findByIdEmpleadoWithLock(@Param("idEmpleado") Long idEmpleado);
+    Optional<EmpleadoEntity> findByIdEmpleadoWithFranjasAndLock(@Param("idEmpleado") Long idEmpleado);
 
     Boolean existsByCorreo(String correo);
-
-    List<EmpleadoEntity> findAll();
 
     boolean existsByIdEmpleado(Long idEmpleado);
 }
