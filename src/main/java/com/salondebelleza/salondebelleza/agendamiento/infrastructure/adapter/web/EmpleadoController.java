@@ -70,7 +70,7 @@ public class EmpleadoController {
     }
 
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     @Operation(
             summary = "Buscar empleado por ID",
             description = "Busca y retorna un empleado específico utilizando su identificador único. " +

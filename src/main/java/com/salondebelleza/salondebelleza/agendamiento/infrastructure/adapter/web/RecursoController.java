@@ -253,7 +253,7 @@ public class RecursoController {
 
     @DeleteMapping("/{id}")
     @Operation(
-            summary = "Elimnar recurso",
+            summary = "Eliminar recurso",
             description = "Elimina un recurso específico del sistema utilizando su identificador único. " +
                     "Esta operación es irreversible y eliminará toda la información asociada al recurso." +
                     "Una vez eliminado, no se retorna ningun contenido (HTTP 204 No Content)"
@@ -274,7 +274,7 @@ public class RecursoController {
             ),
             @ApiResponse(
                     responseCode = "500",
-                    description = "Error interno del servidor al intentar elimninar el recurso",
+                    description = "Error interno del servidor al intentar eliminar el recurso",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)
