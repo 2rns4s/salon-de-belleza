@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("${api.base-path}/clientes")
-@Schema(name = "ClienteController", description = "Controlador para el manejo de clientes")
+@Tag(name = "ClienteController", description = "Controlador para el manejo de clientes")
 public class ClienteController {
     private final ActualizarClienteUseCase actualizarClienteUseCase;
     private final BuscarClienteUseCase buscarClienteUseCase;
@@ -137,7 +138,8 @@ public class ClienteController {
             ),
             @Parameter(
                     name = "nombre",
-                    description = "Nombre o parte del nombre del cliente. Realiza una búsqueda parcial (LIKE) y retorna una lista de coincidencias.",
+                    description = "Nombre o parte del nombre del cliente. Realiza una búsqueda parcial (LIKE) insensible a mayúsculas/minúsculas y retorna una lista de coincidencias. " +
+                            "Por ejemplo: 'juan' encontrará 'Juan Pérez', 'María Juana', 'JUAN CARLOS', etc.",
                     required = false,
                     example = "Juan"
             )
@@ -251,9 +253,10 @@ public class ClienteController {
     @PutMapping("/{id}")
     @Operation(
             summary = "Actualizar información de un cliente",
-            description = "Actualiza los datos de un cliente existente identificado por su ID. Este endpoint permite modificar " +
-                    "la información del cliente validando que los nuevos datos sean correctos y que no generen conflictos " +
-                    "con otros clientes (ej: teléfono duplicado). Solo se actualizan los campos proporcionados en el request."
+            description = "Actualiza los datos de un cliente existente identificado por su ID. " +
+                    "Los campos que se pueden actualizar son: nombre, apellido y teléfono. " +
+                    "El documento de identidad NO se puede modificar (no está incluido en el request de actualización). " +
+                    "Se valida que el nuevo teléfono no esté siendo usado por otro cliente."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -306,7 +309,9 @@ public class ClienteController {
             )
             @PathVariable long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos actualizados del cliente. Solo se modificarán los campos proporcionados que cumplan con las validaciones.",
+                    description = "Datos actualizados del cliente. Incluye nombre, apellido y teléfono. " +
+                            "Todos los campos son obligatorios y deben cumplir con las validaciones. " +
+                            "El documento NO se puede actualizar (no está incluido en este request).",
                     required = true,
                     content = @Content(
                             mediaType = "application/json",

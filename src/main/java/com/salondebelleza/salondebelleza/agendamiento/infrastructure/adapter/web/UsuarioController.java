@@ -46,7 +46,7 @@ public class UsuarioController {
             summary = "Listar todos los usuarios",
             description = "Retorna una lista completa de todos los usuarios registrados en el sistema del salón de belleza. " +
                     "Cada usuario incluye información personal, rol asignado y estado de actividad. " +
-                    "Los usuarios pueden ser clientes, empleados o administradores del sistema."
+                    "Los roles disponibles son: OWNER (propietario con acceso total) y RECEPTIONIST (recepcionista con acceso limitado a gestión de citas y clientes)."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -118,10 +118,16 @@ public class UsuarioController {
     @Operation(
             summary = "Crear nuevo usuario",
             description = "Registra un nuevo usuario en el sistema del salón de belleza. " +
-                    "Este endpoint permite crear usuarios con diferentes roles (clientes, empleados, administradores) " +
-                    "proporcionando todos los datos necesarios para su registro. Se validan los datos de entrada " +
-                    "para garantizar la integridad de la información: unicidad del nombre de usuario, " +
-                    "existencia del empleado asociado, y que el empleado no tenga ya un usuario registrado."
+                    "Los usuarios representan las cuentas de acceso para los empleados del salón. " +
+                    "Cada empleado puede tener máximo un usuario asociado (relación 1:1).\n\n" +
+                    "**Roles disponibles:**\n" +
+                    "- **OWNER**: Propietario del salón con acceso total al sistema. Requiere MFA obligatorio.\n" +
+                    "- **RECEPTIONIST**: Recepcionista con acceso a gestión de citas y clientes. MFA opcional.\n\n" +
+                    "**Validaciones importantes:**\n" +
+                    "- El nombre de usuario debe ser único en el sistema\n" +
+                    "- El empleado especificado debe existir y no tener ya un usuario asignado\n" +
+                    "- La contraseña se encripta automáticamente con BCrypt\n" +
+                    "- Los usuarios OWNER tienen MFA habilitado por defecto"
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -160,9 +166,13 @@ public class UsuarioController {
             )
     })
     public ResponseEntity<UsuarioResponse> crearUsuario(
-            @Parameter(
-                    description = "Datos del nuevo usuario a registrar. Incluye información personal, " +
-                            "credenciales de acceso y rol asignado. Todos los campos marcados como obligatorios deben ser proporcionados.",
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos del nuevo usuario a registrar. Incluye:\n" +
+                            "- **nombreUsuario**: Identificador único para iniciar sesión\n" +
+                            "- **contrasena**: Contraseña segura (mínimo 8 caracteres)\n" +
+                            "- **rol**: OWNER o RECEPTIONIST\n" +
+                            "- **idEmpleado**: ID del empleado al que se asociará el usuario (relación 1:1)\n\n" +
+                            "**Importante:** Un empleado solo puede tener un usuario asignado.",
                     required = true
             )
             @Valid @RequestBody CrearUsuarioRequest request){
@@ -173,9 +183,10 @@ public class UsuarioController {
     @Operation(
             summary = "Actualizar información de usuario",
             description = "Modifica los datos de un usuario existente en el sistema. " +
-                    "Permite actualizar información personal, cambiar roles, modificar el estado de actividad " +
-                    "y actualizar credenciales. Solo se actualizan los campos proporcionados en la solicitud. " +
-                    "Si se proporciona una nueva contraseña, esta será encriptada antes de ser almacenada."
+                    "Permite actualizar el nombre de usuario, cambiar la contraseña, modificar el rol (OWNER/RECEPTIONIST) " +
+                    "y cambiar el estado de actividad del usuario. " +
+                    "Solo se actualizan los campos proporcionados en la solicitud (actualización parcial). " +
+                    "Si se proporciona una nueva contraseña, esta será encriptada automáticamente con BCrypt antes de almacenarla."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -220,9 +231,13 @@ public class UsuarioController {
                     example = "1"
             )
             @PathVariable Long id,
-            @Parameter(
-                    description = "Datos actualizados del usuario. Solo se modificarán los campos proporcionados. " +
-                            "Los campos no incluidos mantendrán sus valores actuales.",
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos a actualizar del usuario (todos los campos son opcionales):\n" +
+                            "- **nombreUsuario**: Nuevo nombre de usuario (debe ser único)\n" +
+                            "- **contrasena**: Nueva contraseña (será encriptada)\n" +
+                            "- **rol**: Nuevo rol (OWNER o RECEPTIONIST)\n" +
+                            "- **activo**: Estado del usuario (true/false)\n\n" +
+                            "Solo se modificarán los campos proporcionados. Los campos no incluidos mantendrán sus valores actuales.",
                     required = true
             )
             @Valid @RequestBody ActualizarUsuarioRequest request){

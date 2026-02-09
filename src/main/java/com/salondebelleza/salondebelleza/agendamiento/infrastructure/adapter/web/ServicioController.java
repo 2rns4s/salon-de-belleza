@@ -109,9 +109,9 @@ public class ServicioController {
     @GetMapping("/buscar")
     @Operation(
             summary = "Buscar servicio por nombre",
-            description = "Busca y retorna un servicio específico utilizando su nombre. " +
-                    "La búsqueda puede ser sensible a mayúsculas/minúsculas dependiendo de la configuración del sistema. " +
-                    "El nombre debe coincidir exactamente con un servicio existente en el sistema."
+            description = "Busca y retorna un servicio específico utilizando su nombre de forma exacta (no parcial) pero insensible a mayúsculas/minúsculas. " +
+                    "Por ejemplo: 'corte de cabello', 'CORTE DE CABELLO' y 'Corte De Cabello' encontrarán el mismo servicio. " +
+                    "El nombre debe coincidir completamente con un servicio existente en el sistema."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -255,7 +255,8 @@ public class ServicioController {
             )
             @PathVariable long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos actualizados del servicio. Solo se modificarán los campos proporcionados que cumplan con las validaciones.",
+                    description = "Datos actualizados del servicio. Todos los campos (nombre, descripcion, precio, duracion, recursosIds) son obligatorios. " +
+                            "Se valida que el nuevo nombre no esté siendo usado por otro servicio.",
                     required = true,
                     content = @Content(
                             mediaType = "application/json",

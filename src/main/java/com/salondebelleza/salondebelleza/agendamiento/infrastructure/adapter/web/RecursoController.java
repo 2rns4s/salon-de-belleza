@@ -110,9 +110,9 @@ public class RecursoController {
     @GetMapping("/buscar")
     @Operation(
             summary = "Buscar recurso por nombre",
-            description = "Busca y retorna un recurso específico utilizando su nombre. " +
-                    "La búsqueda puede ser sensible a mayúsculas/minúsculas dependiendo de la configuración del sistema. " +
-                    "El nombre debe coincidir exactamente con un recurso existente en el sistema."
+            description = "Busca y retorna un recurso específico utilizando su nombre de forma exacta (no parcial) pero insensible a mayúsculas/minúsculas. " +
+                    "Por ejemplo: 'secador de pelo', 'SECADOR DE PELO' y 'Secador De Pelo' encontrarán el mismo recurso. " +
+                    "El nombre debe coincidir completamente con un recurso existente en el sistema."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -148,9 +148,9 @@ public class RecursoController {
 
     @PostMapping
     @Operation(summary = "Agregar nuevo recurso",
-            description = "Registra un nuevo recurso cliente en el sistema. Este endpoint valida que los datos proporcionados sean correctos." +
+            description = "Registra un nuevo recurso en el sistema. Este endpoint valida que los datos proporcionados sean correctos " +
                     "y que no exista otro recurso con el mismo nombre o la cantidad sea menor a 1. Todos los campos requeridos deben ser proporcionados " +
-                    "segun las reglas de validación definidas en el modelo CrearRecursoRequest")
+                    "según las reglas de validación definidas en el modelo CrearRecursoRequest")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
@@ -240,7 +240,8 @@ public class RecursoController {
             )
             @PathVariable long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos actualizados del recurso. Solo se modificarán los campos proporcionados que cumplan con las validaciones.",
+                    description = "Datos actualizados del recurso. Todos los campos (nombre y cantidadTotal) son obligatorios. " +
+                            "Se valida que el nuevo nombre no esté siendo usado por otro recurso.",
                     required = true,
                     content = @Content(
                             mediaType = "application/json", schema = @Schema(implementation = ActualizarRecursoRequest.class)
