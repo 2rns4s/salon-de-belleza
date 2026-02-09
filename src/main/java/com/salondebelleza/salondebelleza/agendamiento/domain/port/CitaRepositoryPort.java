@@ -16,4 +16,9 @@ public interface CitaRepositoryPort {
     boolean existCitaSolapadaParaEmpleado(Long idEmpleado, LocalDateTime fechaInicio, LocalDateTime fechaFin);
     boolean existCitaSolapadaParaRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin);
     int contarCitasSolapadasPorRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
+    List<Cita> findAllByRangoFecha(LocalDateTime inicioDia, LocalDateTime finDia);
+
+    List<Cita> findAllByRangoFechaAndEmpleado(LocalDateTime inicioDia, LocalDateTime finDia, Long idEmpleado);
 }
+

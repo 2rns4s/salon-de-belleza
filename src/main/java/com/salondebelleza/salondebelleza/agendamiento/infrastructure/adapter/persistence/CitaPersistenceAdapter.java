@@ -68,4 +68,20 @@ public class CitaPersistenceAdapter implements CitaRepositoryPort {
     public int contarCitasSolapadasPorRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         return this.citaRepository.contarCitasSolapadasPorRecurso(idRecurso, fechaInicio, fechaFin);
     }
+
+    @Override
+    public List<Cita> findAllByRangoFecha(LocalDateTime inicioDia, LocalDateTime finDia) {
+        return this.citaRepository.findCitasDelDia(inicioDia, finDia)
+                .stream()
+                .map(citaMapper::toCita)
+                .toList();
+    }
+
+    @Override
+    public List<Cita> findAllByRangoFechaAndEmpleado(LocalDateTime inicioDia, LocalDateTime finDia, Long idEmpleado) {
+        return findAllByRangoFecha(inicioDia, finDia)
+                .stream()
+                .filter(c -> c.getIdEmpleado().equals(idEmpleado))
+                .toList();
+    }
 }

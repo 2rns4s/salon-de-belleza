@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
 
@@ -49,5 +50,8 @@ public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
             @Param("fechaInicio") LocalDateTime fechaInicio,
             @Param("fechaFin") LocalDateTime fechaFin
     );
+
+    @Query("SELECT c FROM CitaEntity c WHERE c.fechaInicio >= :start AND c.fechaInicio < :end")
+    List<CitaEntity> findCitasDelDia(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 }
