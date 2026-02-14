@@ -8,13 +8,18 @@ import java.util.Optional;
 
 public interface CitaRepositoryPort {
 
-    Cita save (Cita cita);
+    Cita save(Cita cita);
+
     Optional<Cita> findById(Long idCita);
+
     void deleteById(Long idCita);
+
     List<Cita> findAll();
 
     boolean existCitaSolapadaParaEmpleado(Long idEmpleado, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
     boolean existCitaSolapadaParaRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin);
+
     int contarCitasSolapadasPorRecurso(Long idRecurso, LocalDateTime fechaInicio, LocalDateTime fechaFin);
 
     List<Cita> findAllByRangoFecha(LocalDateTime inicioDia, LocalDateTime finDia);

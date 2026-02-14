@@ -51,7 +51,12 @@ public class CrearCitaUseCase {
     @Transactional
     public CitaResponse execute(CrearCitaRequest request) {
 
-        // 1. Obtener la duración del servicio para calcular la hora fin
+        // PASO CRÍTICO 1: Bloquear el empleado PRIMERO para evitar race conditions
+        // Esto adquiere un lock pesimista sobre la fila del empleado
+        Empleado empleado = this.empleadoRepositoryPort.findByIdEmpleadoWithFranjasAndLock(request.idEmpleado())
+                .orElseThrow(() -> new EmpleadoNoExistenteException("El empleado con id " + request.idEmpleado() + " no existe"));
+
+        // 2. Obtener la duración del servicio para calcular la hora fin
         Servicio servicio = servicioRepositoryPort.findById(request.idServicio())
                 .orElseThrow(() -> new ServicioNoEncontradoException("Servicio no encontrado con id: " + request.idServicio()));
 
@@ -70,9 +75,6 @@ public class CrearCitaUseCase {
             throw new IllegalArgumentException("No se pueden agendar citas en el pasado.");
         }
 
-        Empleado empleado = this.empleadoRepositoryPort.findByIdEmpleadoWithFranjasAndLock(request.idEmpleado())
-                .orElseThrow(() -> new EmpleadoNoExistenteException("El empleado con id " + request.idEmpleado() + " no existe"));
-
         boolean trabajaEnEsaHora = empleado.getFranjasLaborales().stream()
                 .anyMatch(franja ->
                         franja.getDia().equals(fechaInicio.getDayOfWeek()) &&
@@ -84,7 +86,7 @@ public class CrearCitaUseCase {
             throw new EmpleadoNoTrabajaEnEseHorarioException("El empleado no trabaja en el horario seleccionado.");
         }
 
-        // 2. Validar Disponibilidad del EMPLEADO
+        // 3. Validar Disponibilidad del EMPLEADO (ahora con lock adquirido previamente)
         if (citaRepositoryPort.existCitaSolapadaParaEmpleado(request.idEmpleado(), fechaInicio, fechaFin)) {
             throw new SolapamientoException("El empleado no está disponible en el horario seleccionado.");
         }

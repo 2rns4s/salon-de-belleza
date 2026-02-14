@@ -1,7 +1,9 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.repository;
 
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data.CitaEntity;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,10 +12,11 @@ import java.util.List;
 
 public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
-        SELECT COUNT(c) > 0 
-        FROM CitaEntity c 
-        WHERE c.empleado.idEmpleado = :idEmpleado 
+        SELECT COUNT(c) > 0
+        FROM CitaEntity c
+        WHERE c.empleado.idEmpleado = :idEmpleado
         AND c.estado <> 'CANCELADA'
         AND (c.fechaInicio < :fechaFin AND c.fechaFin > :fechaInicio)
     """)
@@ -37,9 +40,10 @@ public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
             @Param("fechaFin") LocalDateTime fechaFin
     );
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("""
-        SELECT COUNT(c) 
-        FROM CitaEntity c 
+        SELECT COUNT(c)
+        FROM CitaEntity c
         JOIN c.recursosReservados cr
         WHERE cr.recursoEntity.idRecurso = :idRecurso
         AND c.estado <> 'CANCELADA'
