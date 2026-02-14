@@ -1,211 +1,93 @@
-# 💇 Sistema de Gestión de Salón de Belleza
+# Sistema de Gestión de Salón de Belleza
 
-<div align="center">
+![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen?style=flat-square&logo=spring-boot) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?style=flat-square&logo=postgresql)
 
-![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen?style=flat-square&logo=spring-boot)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?style=flat-square&logo=postgresql)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)
+API REST con **Arquitectura Hexagonal** para gestión de salones de belleza: clientes, empleados, servicios, recursos, citas y autenticación JWT + MFA.
 
-**API REST completa para la gestión integral de salones de belleza**
+📚 [Documentación Técnica](DOCUMENTACION.md) • 🎨 [Manual Frontend](MANUAL_FRONTEND.md) • [Swagger UI](http://localhost:8080/swagger-ui.html)
 
-[Documentación Completa](DOCUMENTACION.md) • [API Docs (Swagger)](#-documentación-api)
-
-</div>
-
----
-
-## 📖 Sobre el Proyecto
-
-Sistema backend RESTful desarrollado con **Spring Boot 3.5.7** que implementa **Arquitectura Hexagonal** y **Clean Architecture** para la gestión completa de un salón de belleza, incluyendo:
-
-- 👥 Gestión de clientes, empleados y usuarios
-- 💇 Catálogo de servicios y recursos
-- 📅 Sistema de agendamiento de citas con validaciones inteligentes
-- 🔐 Autenticación JWT + MFA (Multi-Factor Authentication)
-- 📊 Control de disponibilidad y asignación de recursos
-
-## 🚀 Inicio Rápido
-
-### Prerrequisitos
-
-- **Java 21** o superior
-- **Docker** y **Docker Compose**
-- **Gradle 8.x** (incluido con Gradle Wrapper)
-
-### Instalación
+## Inicio Rápido
 
 ```bash
-# 1. Clonar el repositorio
-git clone <url-del-repositorio>
-cd SalonDeBelleza
-
-# 2. Levantar PostgreSQL con Docker Compose
+# 1. Levantar PostgreSQL
 docker-compose up -d
 
-# 3. Compilar y ejecutar la aplicación
+# 2. Ejecutar aplicación
 ./gradlew bootRun
-
-# La aplicación estará disponible en: http://localhost:8080
 ```
 
-### Acceso a la Documentación
+**Acceso:** http://localhost:8080 | **Swagger:** http://localhost:8080/swagger-ui.html
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
-
-## 🏗️ Arquitectura
+## Arquitectura Hexagonal
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   INFRASTRUCTURE                         │
-│  (Controllers, Repositories, Security Config)           │
-├─────────────────────────────────────────────────────────┤
-│                    APPLICATION                           │
-│      (Use Cases, DTOs, Mappers)                         │
-├─────────────────────────────────────────────────────────┤
-│                      DOMAIN                              │
-│  (Entities, Value Objects, Ports, Exceptions)           │
-└─────────────────────────────────────────────────────────┘
+Infrastructure → Controllers, JPA Repositories, Security
+Application    → Use Cases, DTOs, Mappers
+Domain         → Entities, Ports (interfaces), Exceptions
 ```
 
-**Patrón**: Arquitectura Hexagonal (Ports & Adapters) + Clean Architecture
+**Capas**: Domain (core) ← Application (casos de uso) ← Infrastructure (adaptadores)
 
-## 🔐 Autenticación
+## Autenticación JWT + MFA
 
-El sistema utiliza **JWT + MFA (TOTP)** para autenticación segura:
+**Login:** `POST /api/v1/auth/login` → Retorna token (o pre-auth si MFA habilitado)
+**MFA:** `POST /api/v1/auth/verify-mfa` → Valida código TOTP y retorna token final
+**Uso:** Incluir `Authorization: Bearer {token}` en todos los endpoints protegidos
 
-### Login sin MFA (Usuario RECEPTIONIST)
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"nombreUsuario": "recepcionista", "contrasena": "password"}'
+## Endpoints (Base: `/api/v1`)
+
+| Recurso | Endpoint | Operaciones |
+|---------|----------|-------------|
+| Auth | `/auth` | Login, MFA |
+| Clientes | `/clientes` | GET (listar, ID, buscar), POST, PUT, DELETE |
+| Empleados | `/empleados` | GET (listar, ID), POST, PUT, DELETE |
+| Servicios | `/servicios` | GET (listar, ID, buscar), POST, PUT, DELETE |
+| Recursos | `/recursos` | GET (listar, ID, buscar), POST, PUT, DELETE |
+| Citas | `/citas` | GET (listar, ID), POST, PUT, DELETE |
+| Usuarios | `/usuarios` | GET (listar, ID), POST, PUT, DELETE (solo OWNER) |
+| Disponibilidad | `/disponibilidad` | GET (consultar horarios libres) |
+
+## Stack Tecnológico
+
+**Core:** Spring Boot 3.5.7, Spring Security, JPA + PostgreSQL 17
+**Seguridad:** JWT (jjwt), TOTP, BCrypt
+**Mapeo:** MapStruct 1.6.3, Lombok
+**Docs:** SpringDoc OpenAPI 2.8.14
+**Testing:** JUnit 5, Testcontainers
+**Build:** Gradle 8.x
+
+## Base de Datos
+
+**PostgreSQL 17** con migraciones Flyway automáticas:
+- V1: `clientes` | V2: `recursos` | V3: `servicios` + relaciones
+- V4: `empleados`, `franjas_laborales`, `calificaciones`
+- V5: `citas`, `citas_recursos` | V6: `usuarios` (MFA)
+
+**Conexión:** `postgresql://localhost:5432/salon_de_belleza_db` (salon_admin/salon_password)
+
+## Estructura del Proyecto
+
+```
+src/main/java/com/.../agendamiento/
+├── domain/              # Entities, Ports, Exceptions, ValueObjects
+├── application/         # UseCases, DTOs, Mappers
+└── infrastructure/      # Controllers, Repositories, Config, Security
 ```
 
-### Login con MFA (Usuario OWNER)
-```bash
-# Paso 1: Login inicial
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"nombreUsuario": "propietario", "contrasena": "password"}'
+**8 Controllers** (Auth, Cliente, Empleado, Servicio, Recurso, Cita, Usuario, Disponibilidad)
+**6 Ports** (interfaces de repositorio) | **6 Adapters** (implementaciones JPA)
+**28 UseCases** (CRUD completo por entidad) | **2 Mappers** por entidad (DTO + Persistence)
 
-# Paso 2: Verificar código TOTP
-curl -X POST http://localhost:8080/api/v1/auth/verify-mfa \
-  -H "Content-Type: application/json" \
-  -d '{"nombreUsuario": "propietario", "totpCode": "123456", "preAuthToken": "..."}'
-```
-
-## 📡 Endpoints Principales
-
-| Recurso | Endpoint Base | Descripción |
-|---------|---------------|-------------|
-| 🔐 Auth | `/api/v1/auth` | Login y verificación MFA |
-| 👤 Clientes | `/api/v1/clientes` | CRUD de clientes |
-| 👨‍💼 Empleados | `/api/v1/empleados` | CRUD de empleados |
-| 💇 Servicios | `/api/v1/servicios` | CRUD de servicios |
-| 🧴 Recursos | `/api/v1/recursos` | CRUD de recursos |
-| 📅 Citas | `/api/v1/citas` | CRUD de citas |
-| 🔑 Usuarios | `/api/v1/usuarios` | CRUD de usuarios |
-
-Todos los endpoints (excepto `/auth/**`) requieren token JWT en el header:
-```
-Authorization: Bearer {tu-token-jwt}
-```
-
-## 🛠️ Tecnologías
-
-- **Framework**: Spring Boot 3.5.7, Spring Security, Spring Data JPA
-- **Base de Datos**: PostgreSQL + Flyway (migraciones)
-- **Seguridad**: JWT (jjwt), TOTP (totp), BCrypt
-- **Mapeo**: MapStruct 1.6.3, Lombok
-- **Documentación**: SpringDoc OpenAPI 2.8.14
-- **Testing**: JUnit 5, Testcontainers
-- **Build**: Gradle 8.x
-
-## 📦 Comandos Útiles
+## Comandos Útiles
 
 ```bash
-# Compilar proyecto
-./gradlew build
-
-# Ejecutar tests
-./gradlew test
-
-# Generar JAR
-./gradlew bootJar
-
-# Limpiar build
-./gradlew clean
-
-# Levantar PostgreSQL
-docker-compose up -d
-
-# Ver logs de PostgreSQL
-docker-compose logs -f postgres
-
-# Detener contenedores
-docker-compose down
+./gradlew build          # Compilar
+./gradlew test           # Tests
+./gradlew bootRun        # Ejecutar
+docker-compose up -d     # PostgreSQL
+docker-compose down      # Detener DB
 ```
-
-## 📊 Base de Datos
-
-### Migraciones Flyway (Automáticas)
-
-- **V1**: Tabla `clientes`
-- **V2**: Tabla `recursos`
-- **V3**: Tablas `servicios` y `servicio_recursos`
-- **V4**: Tablas `empleados`, `franjas_laborales`, `calificaciones`
-- **V5**: Tablas `citas` y `citas_recursos`
-- **V6**: Tabla `usuarios` (con soporte MFA)
-
-### Configuración de PostgreSQL
-
-```properties
-URL: jdbc:postgresql://localhost:5432/salon_de_belleza_db
-Usuario: salon_admin
-Contraseña: salon_password
-```
-
-## 🎨 Estructura del Proyecto
-
-```
-src/main/java/com/salondebelleza/salondebelleza/
-├── SalonDeBellezaApplication.java
-└── agendamiento/
-    ├── domain/              # Entidades, puertos, excepciones
-    ├── application/         # Casos de uso, DTOs, mappers
-    └── infrastructure/      # Controllers, repositories, config
-```
-
-## 📚 Documentación Completa
-
-Para ver la documentación exhaustiva del proyecto, consulta: **[DOCUMENTACION.md](DOCUMENTACION.md)**
-
-Incluye:
-- 📂 Estructura detallada de carpetas
-- 💾 Diagrama completo de base de datos
-- 🔐 Arquitectura de seguridad JWT + MFA
-- 🎨 Patrones de diseño implementados
-- ❓ FAQ y solución de problemas
-- 🚀 Roadmap de mejoras futuras
-- 📖 Glosario de términos técnicos
-
-## 👥 Equipo de Desarrollo
-
-- **Desarrollador**: Daniel
-- **Organización**: SENA
-- **Proyecto**: Sistema de Gestión de Salón de Belleza
-
-## 📄 Licencia
-
-Proyecto educativo - SENA 2026
 
 ---
 
-<div align="center">
-
-**Estado del Proyecto**: 🟢 En desarrollo activo
-
-**Versión**: 0.0.1-SNAPSHOT | **Documentación**: v3.0 | **Última actualización**: Enero 22, 2026
-
-</div>
+**Proyecto educativo SENA 2026** • v0.0.1-SNAPSHOT • Java 21
