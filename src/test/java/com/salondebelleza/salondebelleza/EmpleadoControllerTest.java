@@ -25,10 +25,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Testcontainers
 @Transactional
-public class EmpleadoControllerTest {
+@org.springframework.test.context.ActiveProfiles("test")
+class EmpleadoControllerTest {
 
     @Container
     @ServiceConnection
