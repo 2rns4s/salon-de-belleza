@@ -1,6 +1,7 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.config.security;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
@@ -25,6 +26,13 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+
+        String role = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                        .orElse("");
+
+        claims.put("rol", role);
         claims.put("type", "ACCESS");
         return buildToken(claims, userDetails, jwtExpirationMs);
     }

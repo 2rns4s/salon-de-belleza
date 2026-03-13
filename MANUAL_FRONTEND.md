@@ -1,426 +1,602 @@
-# Manual Frontend - API Salón de Belleza
+# Manual Frontend - API Salon de Belleza
 
-![API REST](https://img.shields.io/badge/API-REST-blue) ![JSON](https://img.shields.io/badge/Format-JSON-green) ![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+Referencia funcional para consumo de la API desde frontend.
 
-Guía práctica de integración frontend con ejemplos JavaScript.
+## 1) Base de la API
 
----
+- Base URL: `http://localhost:8080/api/v1`
+- Prefijo configurado: `api.base-path=/api/v1` en `src/main/resources/application.properties`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Configuración Base
+## 2) Autenticacion y seguridad
 
-```javascript
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+- Publico (sin JWT): `POST /api/v1/auth/login`, `POST /api/v1/auth/verify-mfa`
+- Privado (con JWT): todos los demas endpoints
+- Header para endpoints privados: `Authorization: Bearer <token>`
 
-const getHeaders = (token = null) => ({
-  'Content-Type': 'application/json',
-  ...(token && { 'Authorization': `Bearer ${token}` })
-});
+## 3) Formato de error
 
-// Función genérica para requests
-async function apiRequest(endpoint, method = 'GET', body = null) {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers: getHeaders(token),
-    body: body ? JSON.stringify(body) : null
-  });
-
-  if (response.status === 401) {
-    localStorage.removeItem('token');
-    throw new Error('Sesión expirada');
-  }
-  if (response.status === 204) return { success: true };
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Error');
-  return data;
-}
-```
-
----
-
-## Autenticación
-
-### Login
-
-```javascript
-// Sin MFA
-const { token } = await apiRequest('/auth/login', 'POST', {
-  nombreUsuario: 'user',
-  contrasena: 'pass'
-});
-localStorage.setItem('token', token);
-
-// Con MFA
-const { token: preAuth, mfaRequired } = await apiRequest('/auth/login', 'POST', {...});
-if (mfaRequired) {
-  const { token } = await apiRequest('/auth/verify-mfa', 'POST', {
-    nombreUsuario: 'user',
-    totpCode: '123456',
-    preAuthToken: preAuth
-  });
-  localStorage.setItem('token', token);
-}
-```
-
----
-
-## Clientes (`/clientes`)
-
-```javascript
-// Listar
-const clientes = await apiRequest('/clientes');
-
-// Buscar por ID
-const cliente = await apiRequest(`/clientes/${id}`);
-
-// Buscar avanzado
-const resultado = await apiRequest('/clientes/buscar?telefono=3001234567');
-// ?documento=123456789 o ?nombre=Juan
-
-// Crear
-const nuevo = await apiRequest('/clientes', 'POST', {
-  nombre: 'Juan',
-  apellido: 'Perez',
-  documento: '1234567890',  // 8-10 dígitos
-  telefono: '3001234567'    // 10 dígitos, inicia con 3
-});
-
-// Actualizar
-const actualizado = await apiRequest(`/clientes/${id}`, 'PUT', { telefono: '...' });
-
-// Eliminar
-await apiRequest(`/clientes/${id}`, 'DELETE'); // 204 No Content
-```
-
----
-
-## Empleados (`/empleados`) - Solo OWNER
-
-```javascript
-// Listar
-const empleados = await apiRequest('/empleados');
-
-// Crear
-const nuevo = await apiRequest('/empleados', 'POST', {
-  nombre: 'Ana',
-  apellido: 'López',
-  correo: 'ana@salon.com',
-  telefono: '3201234567',
-  franjasLaborales: [
-    { dia: 'MONDAY', horaInicio: '08:00', horaFin: '16:00' },
-    { dia: 'WEDNESDAY', horaInicio: '08:00', horaFin: '16:00' }
-  ],
-  idsServicios: [1, 3, 5]  // Servicios que puede realizar
-});
-
-// Días válidos: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
-// Formato hora: "HH:mm" (24h)
-
-// Actualizar
-await apiRequest(`/empleados/${id}`, 'PUT', { telefono: '...' });
-
-// Eliminar (soft delete)
-await apiRequest(`/empleados/${id}`, 'DELETE');
-```
-
----
-
-## Servicios (`/servicios`)
-
-```javascript
-// Listar
-const servicios = await apiRequest('/servicios');
-
-// Buscar por nombre
-const resultado = await apiRequest('/servicios/buscar?nombre=Corte');
-
-// Crear
-const nuevo = await apiRequest('/servicios', 'POST', {
-  nombre: 'Corte de Cabello',
-  duracion: 30,  // minutos
-  recursosRequeridos: [
-    { idRecurso: 1, cantidadRequerida: 1 },
-    { idRecurso: 5, cantidadRequerida: 1 }
-  ]
-});
-
-// Actualizar
-await apiRequest(`/servicios/${id}`, 'PUT', { duracion: 45 });
-
-// Eliminar
-await apiRequest(`/servicios/${id}`, 'DELETE');
-```
-
----
-
-## Recursos (`/recursos`)
-
-```javascript
-// Listar
-const recursos = await apiRequest('/recursos');
-
-// Crear
-const nuevo = await apiRequest('/recursos', 'POST', {
-  nombre: 'Tijeras Profesionales',
-  cantidadTotal: 10
-});
-
-// Actualizar
-await apiRequest(`/recursos/${id}`, 'PUT', { cantidadTotal: 15 });
-
-// Eliminar
-await apiRequest(`/recursos/${id}`, 'DELETE');
-```
-
----
-
-## Citas (`/citas`)
-
-```javascript
-// Listar todas
-const citas = await apiRequest('/citas');
-
-// Buscar por ID
-const cita = await apiRequest(`/citas/${idCita}`);
-
-// Crear (con validaciones automáticas)
-const nueva = await apiRequest('/citas', 'POST', {
-  idCliente: 1,
-  idEmpleado: 2,
-  idServicio: 5,
-  fechaInicio: '2026-02-15T14:00:00'  // ISO 8601
-});
-
-// Validaciones automáticas al crear:
-// ✅ Empleado activo y calificado
-// ✅ Franja laboral disponible
-// ✅ Sin solapamiento
-// ✅ Recursos disponibles
-// ✅ Fecha futura
-
-// Actualizar (cambiar fecha o estado)
-await apiRequest(`/citas/${idCita}`, 'PUT', {
-  estado: 'REALIZADA'  // CONFIRMADA, CANCELADA, REALIZADA
-});
-
-// Eliminar
-await apiRequest(`/citas/${idCita}`, 'DELETE');
-```
-
----
-
-## Usuarios (`/usuarios`) - Solo OWNER
-
-```javascript
-// Listar
-const usuarios = await apiRequest('/usuarios');
-
-// Crear
-const nuevo = await apiRequest('/usuarios', 'POST', {
-  nombreUsuario: 'recepcionista01',
-  contrasena: 'Password123!',
-  rol: 'RECEPTIONIST',  // OWNER o RECEPTIONIST
-  idEmpleado: 5         // Relación 1:1 (cada empleado puede tener máximo un usuario)
-});
-// Nota: Los usuarios OWNER tienen MFA habilitado automáticamente
-
-// Actualizar
-await apiRequest(`/usuarios/${id}`, 'PUT', { contrasena: 'NewPass456!' });
-
-// Desactivar (soft delete)
-await apiRequest(`/usuarios/${id}`, 'DELETE');
-```
-
----
-
-## Disponibilidad (`/disponibilidad`)
-
-```javascript
-// Consultar horarios disponibles para una fecha (todos los empleados)
-const disponibles = await apiRequest(
-  '/disponibilidad?fecha=2026-02-15&idServicio=1'
-);
-
-// Consultar disponibilidad de un empleado específico
-const disponiblesEmpleado = await apiRequest(
-  '/disponibilidad?fecha=2026-02-15&idServicio=1&idEmpleado=3'
-);
-
-// Response:
-// {
-//   "fecha": "2026-02-15",
-//   "horariosDisponibles": ["09:00:00", "10:00:00", "11:00:00", "14:00:00", "15:00:00"]
-// }
-```
-
----
-
-## Manejo de Errores
-
-### Estructura de Error
+El backend usa el objeto `ErrorResponse` (`GlobalExceptionHandler`) con este formato:
 
 ```json
 {
-  "timestamp": "2026-02-09T10:30:00",
+  "timestamp": "2026-03-11T10:30:00",
   "status": 400,
   "error": "Bad Request",
-  "message": "Descripción del error",
-  "path": "/api/v1/clientes"
+  "message": "Error en los datos enviados",
+  "details": [
+    "campo: mensaje de validacion"
+  ]
 }
 ```
 
-### Códigos HTTP
+Campos:
 
-| Código | Descripción | Cuándo |
-|--------|-------------|--------|
-| 200 | OK | GET, PUT exitosos |
-| 201 | Created | POST exitoso |
-| 204 | No Content | DELETE exitoso |
-| 400 | Bad Request | Validación fallida |
-| 401 | Unauthorized | Token inválido/expirado |
-| 403 | Forbidden | Sin permisos (ej: RECEPTIONIST accediendo a /usuarios) |
-| 404 | Not Found | Recurso no existe |
-| 409 | Conflict | Recurso duplicado, solapamiento de citas |
-| 500 | Server Error | Error interno |
+- `timestamp`: fecha/hora del error
+- `status`: codigo HTTP
+- `error`: texto HTTP (`Bad Request`, `Unauthorized`, etc.)
+- `message`: mensaje principal
+- `details`: lista opcional de detalles (normalmente validaciones)
 
-### Manejo en Frontend
+## 4) Codigos HTTP mas comunes
 
-```javascript
-try {
-  const data = await apiRequest('/endpoint', 'POST', {...});
-} catch (error) {
-  switch (error.message) {
-    case 'Sesión expirada':
-      // Redirigir a login
-      window.location.href = '/login';
-      break;
-    default:
-      alert('Error: ' + error.message);
-  }
-}
-```
+- `200`: consulta/actualizacion exitosa
+- `201`: creado
+- `204`: eliminado o desactivado sin contenido
+- `400`: validacion o datos invalidos
+- `401`: no autenticado / credenciales invalidas
+- `403`: acceso denegado
+- `404`: recurso no encontrado
+- `409`: conflicto de negocio (duplicados, solapamiento, etc.)
+- `500`: error interno
+
+## 5) Catalogo de endpoints por controller
+
+> Nota: cuando un endpoint referencia un DTO como `XRequest` o `XResponse`, su estructura completa (atributos + tipo) esta en la seccion **6) Contratos DTO detallados**.
 
 ---
 
-## Mejores Prácticas
+## AuthController (`/auth`)
 
-### 1. Validaciones Frontend
+### `POST /api/v1/auth/login`
 
-```javascript
-// Teléfono colombiano (10 dígitos, inicia con 3)
-const validarTelefono = (tel) => /^3\d{9}$/.test(tel);
+- Que hace: inicia autenticacion por usuario/contrasena.
+- Entrada (Body: `LoginRequest`):
+  - `nombreUsuario` (string, obligatorio)
+  - `contrasena` (string, obligatorio)
+- Salida 200 (Body: `LoginResponse`):
+  - `token` (string)
+  - `mfaRequired` (boolean)
+  - `mensaje` (string)
+- Errores: `400`, `401`, `500`
 
-// Documento (8-10 dígitos)
-const validarDocumento = (doc) => /^\d{8,10}$/.test(doc);
+### `POST /api/v1/auth/verify-mfa`
 
-// Validar antes de enviar
-if (!validarTelefono(telefono)) {
-  alert('Teléfono inválido');
-  return;
-}
-```
-
-### 2. Formateo de Fechas
-
-```javascript
-// Para enviar a API (ISO 8601)
-const formatearParaAPI = (fecha, hora) => `${fecha}T${hora}:00`;
-// Uso: formatearParaAPI('2026-02-15', '14:00') → '2026-02-15T14:00:00'
-
-// Para mostrar al usuario
-const formatearParaMostrar = (fechaISO) =>
-  new Date(fechaISO).toLocaleString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-// Uso: '2026-02-15T14:00:00' → '15 de febrero de 2026, 2:00 p. m.'
-```
-
-### 3. Loading States
-
-```javascript
-let isLoading = false;
-
-function setLoading(loading) {
-  isLoading = loading;
-  document.getElementById('spinner').style.display = loading ? 'block' : 'none';
-}
-
-async function fetchConLoading(promesa) {
-  setLoading(true);
-  try {
-    return await promesa;
-  } finally {
-    setLoading(false);
-  }
-}
-
-// Uso
-const clientes = await fetchConLoading(apiRequest('/clientes'));
-```
-
-### 4. Logout
-
-```javascript
-function logout() {
-  localStorage.removeItem('token');
-  window.location.href = '/login';
-}
-```
+- Que hace: valida TOTP y completa login MFA.
+- Entrada (Body: `MfaVerificationRequest`):
+  - `nombreUsuario` (string, obligatorio)
+  - `totpCode` (string, obligatorio, regex `^\\d{6}$`)
+  - `preAuthToken` (string, obligatorio)
+- Salida 200 (Body: `LoginResponse`)
+- Errores: `400`, `401`, `500`
 
 ---
 
-## Ejemplo Completo: Crear Cita
+## ClienteController (`/clientes`)
 
-```javascript
-// 1. Cargar datos iniciales
-const clientes = await apiRequest('/clientes');
-const servicios = await apiRequest('/servicios');
+### `GET /api/v1/clientes`
 
-// 2. Al seleccionar servicio, cargar empleados calificados
-const empleados = await apiRequest('/empleados');
-const empleadosCalificados = empleados.filter(emp =>
-  emp.calificaciones.some(cal => cal.idServicio == servicioId)
-);
+- Que hace: lista clientes.
+- Entrada: sin body.
+- Salida 200: `ClienteResponse[]`
+- Errores: `500`
 
-// 3. Consultar disponibilidad (opcional)
-const disponibles = await apiRequest(
-  `/disponibilidad?fecha=2026-02-15&idServicio=${servicioId}`
-);
+### `GET /api/v1/clientes/{id}`
 
-// 4. Crear cita
-try {
-  const cita = await apiRequest('/citas', 'POST', {
-    idCliente: 1,
-    idEmpleado: 2,
-    idServicio: 5,
-    fechaInicio: '2026-02-15T14:00:00'
-  });
-  alert('Cita creada exitosamente');
-  console.log(cita);
-} catch (error) {
-  if (error.message.includes('solapamiento')) {
-    alert('El empleado ya tiene una cita en ese horario');
-  } else if (error.message.includes('recursos')) {
-    alert('No hay recursos disponibles');
-  } else {
-    alert('Error: ' + error.message);
-  }
-}
-```
+- Que hace: obtiene cliente por id.
+- Entrada: `id` (path, long)
+- Salida 200: `ClienteResponse`
+- Errores: `404`, `500`
+
+### `GET /api/v1/clientes/buscar`
+
+- Que hace: busqueda por `telefono`, `documento` o `nombre`.
+- Entrada (query params opcionales):
+  - `telefono` (string)
+  - `documento` (string)
+  - `nombre` (string)
+- Salida 200:
+  - por telefono/documento: `ClienteResponse`
+  - por nombre: `ClienteResponse[]`
+- Errores:
+  - `404` (si no existe en busqueda unica)
+  - `400` (si no envias ningun parametro; actualmente retorna string plano)
+  - `500`
+
+### `POST /api/v1/clientes`
+
+- Que hace: crea cliente.
+- Entrada (Body: `CrearClienteRequest`):
+  - `nombre` (string, 3-100, obligatorio)
+  - `apellido` (string, 3-100, obligatorio)
+  - `telefono` (string, regex `^3\\d{9}$`, obligatorio)
+  - `documento` (string, regex `^\\d{8,10}$`, obligatorio)
+- Salida 201: `ClienteResponse`
+- Errores: `400`, `409`, `500`
+
+### `PUT /api/v1/clientes/{id}`
+
+- Que hace: actualiza cliente.
+- Entrada:
+  - `id` (path, long)
+  - Body `ActualizarClienteRequest`:
+    - `nombre` (string, 3-100, obligatorio)
+    - `apellido` (string, 3-100, obligatorio)
+    - `telefono` (string, regex `^3\\d{9}$`, obligatorio)
+- Salida 200: `ClienteResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `DELETE /api/v1/clientes/{id}`
+
+- Que hace: elimina cliente.
+- Entrada: `id` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
 
 ---
 
-## Recursos Adicionales
+## EmpleadoController (`/empleados`)
 
-- **Swagger UI:** http://localhost:8080/swagger-ui.html (prueba interactiva)
-- **OpenAPI Spec:** http://localhost:8080/v3/api-docs
-- **Documentación Técnica:** [DOCUMENTACION.md](DOCUMENTACION.md)
+### `GET /api/v1/empleados`
+
+- Que hace: lista empleados.
+- Entrada: sin body.
+- Salida 200: `EmpleadoResponse[]`
+- Errores: `500`
+
+### `GET /api/v1/empleados/{id}`
+
+- Que hace: obtiene empleado por id.
+- Entrada: `id` (path, long)
+- Salida 200: `EmpleadoResponse`
+- Errores: `404`, `500`
+
+### `POST /api/v1/empleados`
+
+- Que hace: crea empleado.
+- Entrada (Body: `CrearEmpleadoRequest`):
+  - `nombre` (string, obligatorio)
+  - `apellido` (string, obligatorio)
+  - `correo` (string email, obligatorio)
+  - `telefono` (string, regex `^3\\d{9}$`, obligatorio)
+  - `franjasLaborales` (`CrearFranjaRequest[]`, minimo 1, obligatorio)
+  - `serviciosIds` (`Long[]`, minimo 1, obligatorio)
+- Salida 201: `EmpleadoResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `PUT /api/v1/empleados/{id}`
+
+- Que hace: actualizacion parcial de empleado.
+- Entrada:
+  - `id` (path, long)
+  - Body `ActualizarEmpleadoRequest` (todos opcionales):
+    - `nombre` (string, 2-100)
+    - `apellido` (string, 2-100)
+    - `correo` (string email)
+    - `telefono` (string, regex `^3\\d{9}$`)
+- Salida 200: `EmpleadoResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `DELETE /api/v1/empleados/{id}`
+
+- Que hace: elimina empleado.
+- Entrada: `id` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
 
 ---
 
-**v1.0** • Última actualización: Febrero 2026
+## ServicioController (`/servicios`)
+
+### `GET /api/v1/servicios`
+
+- Que hace: lista servicios.
+- Entrada: sin body.
+- Salida 200: `ServicioResponse[]`
+- Errores: `500`
+
+### `GET /api/v1/servicios/{id}`
+
+- Que hace: obtiene servicio por id.
+- Entrada: `id` (path, long)
+- Salida 200: `ServicioResponse`
+- Errores: `404`, `500`
+
+### `GET /api/v1/servicios/buscar?nombre=...`
+
+- Que hace: busca servicio por nombre exacto (insensible a mayusculas/minusculas).
+- Entrada: `nombre` (query, string, obligatorio)
+- Salida 200: `ServicioResponse`
+- Errores: `404`, `500`
+
+### `POST /api/v1/servicios`
+
+- Que hace: crea servicio.
+- Entrada (Body: `CrearServicioRequest`):
+  - `nombre` (string, 3-100, obligatorio)
+  - `duracion` (int, minimo 1, obligatorio)
+  - `recursos` (`RecursoRequerido[]`, minimo 1, obligatorio)
+- Salida 201: `ServicioResponse`
+- Errores: `400`, `409`, `500`
+
+### `PUT /api/v1/servicios/{id}`
+
+- Que hace: actualiza servicio.
+- Entrada:
+  - `id` (path, long)
+  - Body `CrearServicioRequest` (mismo contrato del POST)
+- Salida 200: `ServicioResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `DELETE /api/v1/servicios/{id}`
+
+- Que hace: elimina servicio.
+- Entrada: `id` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
+
+---
+
+## RecursoController (`/recursos`)
+
+### `GET /api/v1/recursos`
+
+- Que hace: lista recursos.
+- Entrada: sin body.
+- Salida 200: `RecursoResponse[]`
+- Errores: `500`
+
+### `GET /api/v1/recursos/{id}`
+
+- Que hace: obtiene recurso por id.
+- Entrada: `id` (path, long)
+- Salida 200: `RecursoResponse`
+- Errores: `404`, `500`
+
+### `GET /api/v1/recursos/buscar?nombre=...`
+
+- Que hace: busca recurso por nombre exacto (insensible a mayusculas/minusculas).
+- Entrada: `nombre` (query, string, obligatorio)
+- Salida 200: `RecursoResponse`
+- Errores: `404`, `500`
+
+### `POST /api/v1/recursos`
+
+- Que hace: crea recurso.
+- Entrada (Body: `CrearRecursoRequest`):
+  - `nombre` (string, 3-100, obligatorio)
+  - `cantidadTotal` (int, minimo 1, obligatorio)
+- Salida 201: `RecursoResponse`
+- Errores: `400`, `409`, `500`
+
+### `PUT /api/v1/recursos/{id}`
+
+- Que hace: actualiza recurso.
+- Entrada:
+  - `id` (path, long)
+  - Body `ActualizarRecursoRequest`:
+    - `nombre` (string, 3-100, obligatorio)
+    - `cantidadTotal` (int, obligatorio)
+- Salida 200: `RecursoResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `DELETE /api/v1/recursos/{id}`
+
+- Que hace: elimina recurso.
+- Entrada: `id` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
+
+---
+
+## CitaController (`/citas`)
+
+### `GET /api/v1/citas`
+
+- Que hace: lista citas.
+- Entrada: sin body.
+- Salida 200: `CitaResponse[]`
+- Errores: `500`
+
+### `GET /api/v1/citas/{idCita}`
+
+- Que hace: obtiene cita por id.
+- Entrada: `idCita` (path, long)
+- Salida 200: `CitaResponse`
+- Errores: `404`, `500`
+
+### `POST /api/v1/citas`
+
+- Que hace: crea cita con validacion de reglas (horario, disponibilidad, recursos, solapamientos).
+- Entrada (Body: `CrearCitaRequest`):
+  - `idCliente` (long, obligatorio)
+  - `idServicio` (long, obligatorio)
+  - `idEmpleado` (long, obligatorio)
+  - `fechaInicio` (`LocalDateTime`, obligatorio, futura)
+- Salida 201: `CitaResponse`
+- Errores: `400`, `404`, `409`, `500`
+
+### `PUT /api/v1/citas/{idCita}`
+
+- Que hace: actualiza estado de cita.
+- Entrada:
+  - `idCita` (path, long)
+  - Body `ActualizarCitaRequest`:
+    - `estado` enum obligatorio: `PENDIENTE | CONFIRMADA | CANCELADA | REALIZADA`
+- Salida 200: `CitaResponse`
+- Errores: `400`, `404`, `500`
+
+### `DELETE /api/v1/citas/{idCita}`
+
+- Que hace: elimina cita.
+- Entrada: `idCita` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
+
+---
+
+## DisponibilidadController (`/disponibilidad`)
+
+### `GET /api/v1/disponibilidad`
+
+- Que hace: consulta horarios disponibles para agendar.
+- Entrada (query params, `DisponibilidadRequest`):
+  - `fecha` (`YYYY-MM-DD`, obligatorio, presente o futura)
+  - `idServicio` (long positivo, obligatorio)
+  - `idEmpleado` (long positivo, opcional)
+- Salida 200 (Body: `DisponibilidadResponse`):
+  - `fecha` (date)
+  - `horariosDisponibles` (`LocalTime[]`, formato `HH:mm:ss`)
+- Errores: `400`, `404`, `500`
+
+---
+
+## UsuarioController (`/usuarios`)
+
+### `GET /api/v1/usuarios`
+
+- Que hace: lista usuarios.
+- Entrada: sin body.
+- Salida 200: `UsuarioResponse[]`
+- Errores: `500`
+
+### `GET /api/v1/usuarios/{id}`
+
+- Que hace: obtiene usuario por id.
+- Entrada: `id` (path, long)
+- Salida 200: `UsuarioResponse`
+- Errores: `404`, `500`
+
+### `POST /api/v1/usuarios`
+
+- Que hace: crea usuario de acceso.
+- Entrada (Body: `CrearUsuarioRequest`):
+  - `nombreUsuario` (string, 4-50, obligatorio)
+  - `contrasena` (string, 8-100, obligatorio)
+  - `rol` (string obligatorio: `OWNER | RECEPTIONIST`)
+  - `idEmpleado` (long positivo, obligatorio)
+- Salida 201: `UsuarioResponse`
+- Errores: `400`, `409`, `500`
+
+### `PUT /api/v1/usuarios/{id}`
+
+- Que hace: actualizacion parcial de usuario.
+- Entrada:
+  - `id` (path, long)
+  - Body `ActualizarUsuarioRequest` (todos opcionales):
+    - `nombreUsuario` (string, 4-50)
+    - `contrasena` (string, 8-100)
+    - `rol` (`OWNER | RECEPTIONIST`)
+    - `activo` (boolean)
+- Salida 200: `UsuarioResponse`
+- Errores: `400`, `404`, `500`
+
+### `DELETE /api/v1/usuarios/{id}`
+
+- Que hace: desactiva usuario (soft delete, `activo=false`).
+- Entrada: `id` (path, long)
+- Salida 204: sin contenido
+- Errores: `404`, `500`
+
+## 6) Contratos DTO detallados (Request y Response)
+
+### 6.1 Request DTOs
+
+#### `LoginRequest`
+- `nombreUsuario`: `string`
+- `contrasena`: `string`
+
+#### `MfaVerificationRequest`
+- `nombreUsuario`: `string`
+- `totpCode`: `string` (6 digitos, regex `^\\d{6}$`)
+- `preAuthToken`: `string`
+
+#### `CrearClienteRequest`
+- `nombre`: `string`
+- `apellido`: `string`
+- `telefono`: `string`
+- `documento`: `string`
+
+#### `ActualizarClienteRequest`
+- `nombre`: `string`
+- `apellido`: `string`
+- `telefono`: `string`
+
+#### `CrearFranjaRequest`
+- `dia`: `enum DayOfWeek` (`MONDAY` ... `SUNDAY`)
+- `horaInicio`: `LocalTime` (formato `HH:mm:ss`)
+- `horaFin`: `LocalTime` (formato `HH:mm:ss`)
+
+#### `CrearEmpleadoRequest`
+- `nombre`: `string`
+- `apellido`: `string`
+- `correo`: `string` (email)
+- `telefono`: `string`
+- `franjasLaborales`: `CrearFranjaRequest[]`
+- `serviciosIds`: `long[]`
+
+#### `ActualizarEmpleadoRequest`
+- `nombre`: `string` (opcional)
+- `apellido`: `string` (opcional)
+- `correo`: `string` (email, opcional)
+- `telefono`: `string` (opcional)
+
+#### `RecursoRequerido`
+- `idRecurso`: `long`
+- `cantidadRequerida`: `int`
+
+#### `CrearServicioRequest`
+- `nombre`: `string`
+- `duracion`: `int`
+- `recursos`: `RecursoRequerido[]`
+
+#### `CrearRecursoRequest`
+- `nombre`: `string`
+- `cantidadTotal`: `int`
+
+#### `ActualizarRecursoRequest`
+- `nombre`: `string`
+- `cantidadTotal`: `int`
+
+#### `CrearCitaRequest`
+- `idCliente`: `long`
+- `idServicio`: `long`
+- `idEmpleado`: `long`
+- `fechaInicio`: `LocalDateTime` (formato ISO `yyyy-MM-dd'T'HH:mm:ss`)
+
+#### `ActualizarCitaRequest`
+- `estado`: `enum EstadoCita` (`PENDIENTE | CONFIRMADA | CANCELADA | REALIZADA`)
+
+#### `DisponibilidadRequest` (query params en `GET /disponibilidad`)
+- `fecha`: `LocalDate` (formato `yyyy-MM-dd`)
+- `idServicio`: `long`
+- `idEmpleado`: `long` (opcional)
+
+#### `CrearUsuarioRequest`
+- `nombreUsuario`: `string`
+- `contrasena`: `string`
+- `rol`: `string` (`OWNER | RECEPTIONIST`)
+- `idEmpleado`: `long`
+
+#### `ActualizarUsuarioRequest`
+- `nombreUsuario`: `string` (opcional)
+- `contrasena`: `string` (opcional)
+- `rol`: `string` (`OWNER | RECEPTIONIST`, opcional)
+- `activo`: `boolean` (opcional)
+
+### 6.2 Response DTOs
+
+#### `LoginResponse`
+- `token`: `string`
+- `mfaRequired`: `boolean`
+- `mensaje`: `string`
+
+#### `ClienteResponse`
+- `idCliente`: `long`
+- `nombre`: `string`
+- `apellido`: `string`
+- `documento`: `string`
+- `telefono`: `string`
+
+#### `FranjaLaboralResponse`
+- `idFranjaLaboral`: `long`
+- `dia`: `enum DayOfWeek`
+- `horaInicio`: `LocalTime`
+- `horaFin`: `LocalTime`
+
+#### `EmpleadoResponse`
+- `idEmpleado`: `long`
+- `nombre`: `string`
+- `apellido`: `string`
+- `correo`: `string`
+- `telefono`: `string`
+- `franjasLaborales`: `FranjaLaboralResponse[]`
+- `serviciosIds`: `long[]`
+
+#### `RecursoEnServicioResponse`
+- `idRecurso`: `long`
+- `nombre`: `string`
+- `cantidadRequerida`: `int`
+
+#### `ServicioResponse`
+- `idServicio`: `long`
+- `nombre`: `string`
+- `duracion`: `int`
+- `recursos`: `RecursoEnServicioResponse[]`
+
+#### `RecursoResponse`
+- `idRecurso`: `long`
+- `nombre`: `string`
+- `cantidadTotal`: `int`
+
+#### `CitaRecursoResponse`
+- `idCitaRecurso`: `long`
+- `idRecurso`: `long`
+
+#### `CitaResponse`
+- `idCita`: `long`
+- `idCliente`: `long`
+- `idServicio`: `long`
+- `idEmpleado`: `long`
+- `fechaInicio`: `LocalDateTime`
+- `fechaFin`: `LocalDateTime`
+- `estado`: `enum EstadoCita`
+- `recursosAsignados`: `CitaRecursoResponse[]`
+
+#### `DisponibilidadResponse`
+- `fecha`: `LocalDate`
+- `horariosDisponibles`: `LocalTime[]`
+
+#### `UsuarioResponse`
+- `idUsuario`: `long`
+- `nombreUsuario`: `string`
+- `rol`: `string`
+- `idEmpleado`: `long`
+- `activo`: `boolean`
+- `mfaEnabled`: `boolean`
+
+#### `ErrorResponse`
+- `timestamp`: `LocalDateTime`
+- `status`: `int`
+- `error`: `string`
+- `message`: `string`
+- `details`: `array` (normalmente `string[]`, puede venir `null`)
+
+## 7) Excepciones de negocio mapeadas por el backend
+
+Segun `GlobalExceptionHandler`, entre otras:
+
+- `ClienteNoEncontradoException` -> `404`
+- `ClienteExistenteException` -> `409`
+- `EmpleadoNoExistenteException` -> `404`
+- `EmpleadoExistenteException` -> `409`
+- `ServicioNoEncontradoException` -> `404`
+- `ServicioExistenteException` -> `409`
+- `RecursoNoEncontradoException` -> `404`
+- `RecursoExistenteException` -> `409`
+- `CitaNoEncontradaException` -> `404`
+- `CitaExistenteException` -> `409`
+- `SolapamientoException` -> `409`
+- `CitaFueraDeHorarioException` -> `400`
+- `EmpleadoNoTrabajaEnEseHorarioException` -> `400`
+- `UsuarioNoExistenteException` -> `404`
+- `UsuarioExistenteException` -> `409`
+- `AccesoDenegadoException` -> `403`
+- `AuthenticationException` -> `401`
+- `MethodArgumentNotValidException` -> `400` con `details[]`
+- `Exception` generica -> `500`
+
+---
+
+Documento alineado con controllers y DTOs actuales en `src/main/java/...`.

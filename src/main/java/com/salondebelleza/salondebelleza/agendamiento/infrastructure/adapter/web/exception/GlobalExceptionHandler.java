@@ -3,6 +3,7 @@ package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.we
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -92,6 +93,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SolapamientoException.class)
     public ResponseEntity<ErrorResponse> handleSolapamientoException(SolapamientoException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Credenciales invalidas o acceso no autorizado", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

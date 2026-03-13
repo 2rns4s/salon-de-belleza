@@ -72,40 +72,63 @@ public class ObtenerDisponibilidadUseCase {
 
         List<Cita> todasLasCitasDelDia = citaRepositoryPort.findAllByRangoFecha(inicioDia, finDia);
 
-        List<FranjaLaboral> franjasEmpleado;
-        List<Cita> citasDelEmpleado;
-
-        if (request.idEmpleado() != null) {
-            Empleado empleado = empleadoRepositoryPort.findById(request.idEmpleado())
-                    .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado"));
-
-            franjasEmpleado = empleado.getFranjasLaborales();
-
-            citasDelEmpleado = todasLasCitasDelDia.stream()
-                    .filter(c -> c.getIdEmpleado().equals(request.idEmpleado()))
-                    .toList();
-        } else {
-            return new DisponibilidadResponse(request.fecha(), Collections.emptyList());
-        }
-
         List<LocalTime> slotsDisponibles = new ArrayList<>();
         LocalTime slotActual = horaInicioSalon;
 
-        while (!slotActual.plusMinutes(duracionServicio).isAfter(horaFinSalon)) {
-            LocalTime inicio = slotActual;
-            LocalTime fin = slotActual.plusMinutes(duracionServicio);
+        if (request.idEmpleado() != null) {
+            // Filtrar disponibilidad para un empleado específico
+            Empleado empleado = empleadoRepositoryPort.findById(request.idEmpleado())
+                    .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado"));
 
-            boolean empleadoDisponible = esHorarioLaboral(inicio, fin, request.fecha(), franjasEmpleado) &&
-                    !hayConflictoConCitas(inicio, fin, citasDelEmpleado);
+            List<FranjaLaboral> franjasEmpleado = empleado.getFranjasLaborales();
 
-            boolean recursosDisponibles = empleadoDisponible && hayStockDeRecursos(inicio, fin, recursosRequeridosIds, inventarioDeRecursos, todasLasCitasDelDia);
+            List<Cita> citasDelEmpleado = todasLasCitasDelDia.stream()
+                    .filter(c -> c.getIdEmpleado().equals(request.idEmpleado()))
+                    .toList();
 
-            if (recursosDisponibles) {
-                slotsDisponibles.add(inicio);
+            while (!slotActual.plusMinutes(duracionServicio).isAfter(horaFinSalon)) {
+                LocalTime inicio = slotActual;
+                LocalTime fin = slotActual.plusMinutes(duracionServicio);
+
+                boolean empleadoDisponible = esHorarioLaboral(inicio, fin, request.fecha(), franjasEmpleado) &&
+                        !hayConflictoConCitas(inicio, fin, citasDelEmpleado);
+
+                boolean recursosDisponibles = empleadoDisponible && hayStockDeRecursos(inicio, fin, recursosRequeridosIds, inventarioDeRecursos, todasLasCitasDelDia);
+
+                if (recursosDisponibles) {
+                    slotsDisponibles.add(inicio);
+                }
+
+                slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
             }
+        } else {
+            // Sin empleado específico: mostrar slots donde AL MENOS UN empleado esté disponible
+            List<Empleado> todosLosEmpleados = empleadoRepositoryPort.findAll();
 
-            slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
+            while (!slotActual.plusMinutes(duracionServicio).isAfter(horaFinSalon)) {
+                LocalTime inicio = slotActual;
+                LocalTime fin = slotActual.plusMinutes(duracionServicio);
+
+                boolean hayAlgunEmpleadoDisponible = todosLosEmpleados.stream().anyMatch(emp -> {
+                    List<FranjaLaboral> franjas = emp.getFranjasLaborales();
+                    List<Cita> citasEmp = todasLasCitasDelDia.stream()
+                            .filter(c -> c.getIdEmpleado().equals(emp.getIdEmpleado()))
+                            .toList();
+                    return esHorarioLaboral(inicio, fin, request.fecha(), franjas) &&
+                            !hayConflictoConCitas(inicio, fin, citasEmp);
+                });
+
+                boolean recursosDisponibles = hayAlgunEmpleadoDisponible &&
+                        hayStockDeRecursos(inicio, fin, recursosRequeridosIds, inventarioDeRecursos, todasLasCitasDelDia);
+
+                if (recursosDisponibles) {
+                    slotsDisponibles.add(inicio);
+                }
+
+                slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
+            }
         }
+
         return new DisponibilidadResponse(request.fecha(), slotsDisponibles);
     }
 
