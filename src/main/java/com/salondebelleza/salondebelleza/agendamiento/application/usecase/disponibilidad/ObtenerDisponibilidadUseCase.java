@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,86 +55,59 @@ public class ObtenerDisponibilidadUseCase {
     @Transactional(readOnly = true)
     public DisponibilidadResponse execute(DisponibilidadRequest request) {
 
-        Servicio servicio = this.servicioRepositoryPort.findById(request.idServicio()).orElseThrow(
-                () -> new ServicioNoEncontradoException("El servicio con id " + request.idServicio() + " no existe"));
+        // 1. Obtener datos del servicio y recursos
+        Servicio servicio = this.servicioRepositoryPort.findById(request.idServicio())
+                .orElseThrow(() -> new ServicioNoEncontradoException("El servicio con id " + request.idServicio() + " no existe"));
 
-        int duracionServicio = servicio.getDuracion();
+        int duracion = servicio.getDuracion();
+        List<Long> recursosIds = extraerIdsRecursos(servicio);
+        Map<Long, Integer> inventario = obtenerInventarioRecursos();
 
-        List<Long> recursosRequeridosIds = (servicio.getServicioRecursos() != null)
-                ? servicio.getServicioRecursos().stream().map(ServicioRecursos::getIdRecurso).toList()
-                : Collections.emptyList();
-
-        Map<Long, Integer> inventarioDeRecursos = this.recursoRepositoryPort.findAll()
-                .stream()
-                .collect(Collectors.toMap(Recurso::getIdRecurso, Recurso::getCantidadTotal));
-
+        // 2. Obtener contexto del día y pre-agrupar citas (Mejora de rendimiento)
         LocalDateTime inicioDia = request.fecha().atStartOfDay();
-        LocalDateTime finDia = inicioDia.plusDays(1);
+        List<Cita> citasDelDia = citaRepositoryPort.findAllByRangoFecha(inicioDia, inicioDia.plusDays(1));
 
-        List<Cita> todasLasCitasDelDia = citaRepositoryPort.findAllByRangoFecha(inicioDia, finDia);
+        Map<Long, List<Cita>> citasPorEmpleado = citasDelDia.stream()
+                .collect(Collectors.groupingBy(Cita::getIdEmpleado));
 
+        // 3. Unificar la lista de empleados a evaluar (Mejora de complejidad)
+        List<Empleado> empleadosAValidar = determinarEmpleadosAValidar(request.idEmpleado());
+
+        // 4. Calcular los slots disponibles
         List<LocalTime> slotsDisponibles = new ArrayList<>();
         LocalTime slotActual = horaInicioSalon;
 
-        if (request.idEmpleado() != null) {
-            // Filtrar disponibilidad para un empleado específico
-            Empleado empleado = empleadoRepositoryPort.findById(request.idEmpleado())
-                    .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado"));
+        ZoneId zonaHorariaNegocio = ZoneId.of("America/Bogota");
+        LocalDateTime limiteReserva = LocalDateTime.now(zonaHorariaNegocio).plusMinutes(duracion);
 
-            List<FranjaLaboral> franjasEmpleado = empleado.getFranjasLaborales();
+        while (!slotActual.plusMinutes(duracion).isAfter(horaFinSalon)) {
+            LocalTime inicio = slotActual;
+            LocalTime fin = slotActual.plusMinutes(duracion);
 
-            List<Cita> citasDelEmpleado = todasLasCitasDelDia.stream()
-                    .filter(c -> c.getIdEmpleado().equals(request.idEmpleado()))
-                    .toList();
+            LocalDateTime inicioSlotCompleto = LocalDateTime.of(request.fecha(), inicio);
 
-            while (!slotActual.plusMinutes(duracionServicio).isAfter(horaFinSalon)) {
-                LocalTime inicio = slotActual;
-                LocalTime fin = slotActual.plusMinutes(duracionServicio);
-
-                boolean empleadoDisponible = esHorarioLaboral(inicio, fin, request.fecha(), franjasEmpleado) &&
-                        !hayConflictoConCitas(inicio, fin, citasDelEmpleado);
-
-                boolean recursosDisponibles = empleadoDisponible && hayStockDeRecursos(inicio, fin, recursosRequeridosIds, inventarioDeRecursos, todasLasCitasDelDia);
-
-                if (recursosDisponibles) {
-                    slotsDisponibles.add(inicio);
-                }
-
+            if (inicioSlotCompleto.isBefore(limiteReserva)) {
                 slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
+                continue; // No mostrar slots pasados
             }
-        } else {
-            // Sin empleado específico: mostrar slots donde AL MENOS UN empleado esté disponible
-            List<Empleado> todosLosEmpleados = empleadoRepositoryPort.findAll();
 
-            while (!slotActual.plusMinutes(duracionServicio).isAfter(horaFinSalon)) {
-                LocalTime inicio = slotActual;
-                LocalTime fin = slotActual.plusMinutes(duracionServicio);
+            boolean empleadoDisponible = empleadosAValidar.stream().anyMatch(emp -> {
+                List<Cita> citasEmp = citasPorEmpleado.getOrDefault(emp.getIdEmpleado(), Collections.emptyList());
+                return esHorarioLaboral(inicio, fin, request.fecha(), emp.getFranjasLaborales()) &&
+                        !hayConflictoConCitas(inicio, fin, citasEmp);
+            });
 
-                boolean hayAlgunEmpleadoDisponible = todosLosEmpleados.stream().anyMatch(emp -> {
-                    List<FranjaLaboral> franjas = emp.getFranjasLaborales();
-                    List<Cita> citasEmp = todasLasCitasDelDia.stream()
-                            .filter(c -> c.getIdEmpleado().equals(emp.getIdEmpleado()))
-                            .toList();
-                    return esHorarioLaboral(inicio, fin, request.fecha(), franjas) &&
-                            !hayConflictoConCitas(inicio, fin, citasEmp);
-                });
-
-                boolean recursosDisponibles = hayAlgunEmpleadoDisponible &&
-                        hayStockDeRecursos(inicio, fin, recursosRequeridosIds, inventarioDeRecursos, todasLasCitasDelDia);
-
-                if (recursosDisponibles) {
-                    slotsDisponibles.add(inicio);
-                }
-
-                slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
+            if (empleadoDisponible && hayStockDeRecursos(inicio, fin, recursosIds, inventario, citasDelDia)) {
+                slotsDisponibles.add(inicio);
             }
+
+            slotActual = slotActual.plusMinutes(INTERVALO_MINIMO_CITAS);
         }
 
         return new DisponibilidadResponse(request.fecha(), slotsDisponibles);
     }
 
     private boolean esHorarioLaboral(LocalTime inicio, LocalTime fin, LocalDate fecha, List<FranjaLaboral> franjas) {
-        // CORRECCIÓN
         return franjas.stream().anyMatch(franja ->
                 franja.getDia().equals(fecha.getDayOfWeek())
                         && !inicio.isBefore(franja.getHoraInicio())
@@ -174,5 +148,26 @@ public class ObtenerDisponibilidadUseCase {
             if (usadosAhora >= capacidadTotal) return false;
         }
         return true;
+    }
+
+    private List<Empleado> determinarEmpleadosAValidar(Long idEmpleado) {
+        if (idEmpleado != null) {
+            Empleado empleado = empleadoRepositoryPort.findById(idEmpleado)
+                    .orElseThrow(() -> new EmpleadoNoExistenteException("Empleado no encontrado"));
+            return List.of(empleado); // Lista de un solo elemento
+        }
+        return empleadoRepositoryPort.findAll(); // Todos los empleados
+    }
+
+    private List<Long> extraerIdsRecursos(Servicio servicio) {
+        if (servicio.getServicioRecursos() == null) return Collections.emptyList();
+        return servicio.getServicioRecursos().stream()
+                .map(ServicioRecursos::getIdRecurso)
+                .toList();
+    }
+
+    private Map<Long, Integer> obtenerInventarioRecursos() {
+        return this.recursoRepositoryPort.findAll().stream()
+                .collect(Collectors.toMap(Recurso::getIdRecurso, Recurso::getCantidadTotal));
     }
 }

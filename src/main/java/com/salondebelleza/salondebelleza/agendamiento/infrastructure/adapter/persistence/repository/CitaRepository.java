@@ -55,7 +55,7 @@ public interface CitaRepository extends JpaRepository<CitaEntity, Long> {
             @Param("fechaFin") LocalDateTime fechaFin
     );
 
-    @Query("SELECT c FROM CitaEntity c WHERE c.fechaInicio >= :start AND c.fechaInicio < :end")
+    @Query("SELECT c FROM CitaEntity c WHERE c.fechaInicio >= :start AND c.fechaInicio < :end AND c.estado <> 'CANCELADA'")
     List<CitaEntity> findCitasDelDia(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 }
