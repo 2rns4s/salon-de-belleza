@@ -24,7 +24,7 @@ public interface UsuarioDTOMapper {
     @Mapping(target = "contrasena", ignore = true)
     @Mapping(target = "mfaSecret", ignore = true)
     @Mapping(target = "codigosRecuperacion", ignore = true)
-    @Mapping(target = "mfaEnable", ignore = true)
+    @Mapping(target = "mfaEnabled", ignore = true)
     @Mapping(target = "idEmpleado", ignore = true)
     void updateUsuarioFromDto(ActualizarUsuarioRequest request, @MappingTarget Usuario usuario);
 
