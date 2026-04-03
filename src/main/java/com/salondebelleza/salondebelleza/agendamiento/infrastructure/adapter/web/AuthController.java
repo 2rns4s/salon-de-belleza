@@ -1,9 +1,8 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web;
 
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.auth.LoginRequest;
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.auth.LoginResponse;
-import com.salondebelleza.salondebelleza.agendamiento.application.dto.auth.MfaVerificationRequest;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.auth.*;
 import com.salondebelleza.salondebelleza.agendamiento.application.usecase.auth.LoginUseCase;
+import com.salondebelleza.salondebelleza.agendamiento.application.usecase.auth.RegistrarUsuarioEmpleadoUseCase;
 import com.salondebelleza.salondebelleza.agendamiento.application.usecase.auth.VerificarMfaUseCase;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +24,13 @@ public class AuthController {
 
     private final LoginUseCase loginUseCase;
     private final VerificarMfaUseCase verificarMfaUseCase;
+    private final RegistrarUsuarioEmpleadoUseCase registrarUsuarioEmpleadoUseCase;
 
     @Autowired
-    public AuthController(LoginUseCase loginUseCase, VerificarMfaUseCase verificarMfaUseCase) {
+    public AuthController(LoginUseCase loginUseCase, VerificarMfaUseCase verificarMfaUseCase, RegistrarUsuarioEmpleadoUseCase registrarUsuarioEmpleadoUseCase) {
         this.loginUseCase = loginUseCase;
         this.verificarMfaUseCase = verificarMfaUseCase;
+        this.registrarUsuarioEmpleadoUseCase = registrarUsuarioEmpleadoUseCase;
     }
 
     @PostMapping("/login")
@@ -180,5 +182,81 @@ public class AuthController {
             )
             @Valid @RequestBody MfaVerificationRequest request) {
         return ResponseEntity.ok(verificarMfaUseCase.execute(request));
+    }
+
+    @PostMapping("/employee-signup")
+    @Operation(
+            summary = "Registro público de cuenta para empleado",
+            description = "Permite a un empleado **pre-registrado** por el administrador crear su cuenta de usuario.\n\n" +
+                    "**Flujo de registro:**\n" +
+                    "1. El administrador registra previamente al empleado en el sistema con su correo.\n" +
+                    "2. El empleado llama a este endpoint con su correo, un username y una contraseña.\n" +
+                    "3. El sistema valida que el correo pertenece a un empleado existente y que no tiene cuenta aún.\n" +
+                    "4. Se crea la cuenta con rol `RECEPTIONIST` y `mfaEnabled = false` por defecto.\n\n" +
+                    "**Validaciones:**\n" +
+                    "- El correo debe pertenecer a un empleado registrado por el administrador.\n" +
+                    "- El correo no puede tener ya una cuenta de usuario asociada.\n" +
+                    "- El username debe ser único en el sistema.\n" +
+                    "- El username debe tener entre 4 y 20 caracteres.\n" +
+                    "- La contraseña debe tener mínimo 8 caracteres."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Cuenta creada correctamente. Retorna el ID del empleado, el username y el rol asignado.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = EmpleadoSignUpResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Datos de entrada inválidos:\n" +
+                            "- Correo vacío o con formato inválido\n" +
+                            "- Username vacío o fuera del rango de 4-20 caracteres\n" +
+                            "- Contraseña vacía o con menos de 8 caracteres",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No existe ningún empleado registrado con el correo proporcionado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Conflicto de unicidad. Puede ocurrir por:\n" +
+                            "- El correo ya tiene una cuenta de usuario reclamada\n" +
+                            "- El username ya está en uso por otro usuario",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor durante el registro",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            )
+    })
+    public ResponseEntity<EmpleadoSignUpResponse> employeeSignUp(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos para crear la cuenta del empleado: correo pre-registrado por el admin, username deseado y contraseña.",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = EmpleadoSignUpRequest.class)
+                    )
+            )
+            @Valid @RequestBody EmpleadoSignUpRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.registrarUsuarioEmpleadoUseCase.execute(request));
     }
 }
