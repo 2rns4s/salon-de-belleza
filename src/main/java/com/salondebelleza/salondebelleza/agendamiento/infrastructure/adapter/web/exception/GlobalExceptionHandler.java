@@ -1,8 +1,10 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.web.exception;
 
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CitaFueraDeHorarioException.class)
@@ -70,6 +73,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(EmpleadoConUsuarioYaExistenteException.class)
+    public ResponseEntity<ErrorResponse> handleEmpleadoConUsuarioYaExistenteException(EmpleadoConUsuarioYaExistenteException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(ServicioNoEncontradoException.class)
     public ResponseEntity<ErrorResponse> handleServicioNoEncontradoException(ServicioNoEncontradoException ex) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
@@ -97,7 +105,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Credenciales invalidas o acceso no autorizado", null);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(ErrorAlGenerarMfaQr.class)
+    public ResponseEntity<ErrorResponse> handleErrorAlGenerarMfaQr(ErrorAlGenerarMfaQr ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(MfaInvalidoException.class)
+    public ResponseEntity<ErrorResponse> handleMfaInvalidoException(MfaInvalidoException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -111,7 +134,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ex.printStackTrace();
+        log.error("Error no controlado", ex);
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error inesperado", null);
     }
 
