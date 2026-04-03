@@ -34,6 +34,14 @@ public class JwtService {
 
         claims.put("rol", role);
         claims.put("type", "ACCESS");
+
+        if (userDetails instanceof SecurityUser securityUser) {
+            boolean isMfaEnabled = securityUser.usuario().getMfaEnabled();
+            claims.put("mfa_enabled", isMfaEnabled);
+        } else {
+            // Fallback defensivo por si en algún test usamos un User normal de Spring
+            claims.put("mfa_enabled", false);
+        }
         return buildToken(claims, userDetails, jwtExpirationMs);
     }
 
