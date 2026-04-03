@@ -20,4 +20,6 @@ public interface EmpleadoRepositoryPort {
     Optional<Empleado> findByIdEmpleadoWithFranjasAndLock(Long idEmpleado);
 
     boolean existByIdEmpleado(Long idEmpleado);
+
+    Optional<Empleado> findByCorreo(String correo);
 }

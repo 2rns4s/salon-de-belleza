@@ -38,7 +38,7 @@ public class LoginUseCase {
 
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(usuario.getNombreUsuario());
 
-        boolean requiereMfa = "OWNER".equals(usuario.getRol()) || Boolean.TRUE.equals(usuario.getMfaEnable());
+        boolean requiereMfa = "OWNER".equals(usuario.getRol()) || Boolean.TRUE.equals(usuario.getMfaEnabled());
 
         if (requiereMfa) {
             String preToken = jwtService.generatePreAuthToken(userDetails);

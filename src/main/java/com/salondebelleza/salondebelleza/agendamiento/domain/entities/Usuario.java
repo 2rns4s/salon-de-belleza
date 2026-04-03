@@ -13,7 +13,7 @@ public class Usuario {
     private String contrasena;
     private String rol;
     private Long idEmpleado;
-    private Boolean mfaEnable;
+    private Boolean mfaEnabled;
     private String mfaSecret;
     private String codigosRecuperacion;
     private Boolean activo;

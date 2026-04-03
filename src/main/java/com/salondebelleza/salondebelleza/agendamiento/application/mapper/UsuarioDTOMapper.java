@@ -29,7 +29,7 @@ public interface UsuarioDTOMapper {
     void updateUsuarioFromDto(ActualizarUsuarioRequest request, @MappingTarget Usuario usuario);
 
 
-    @Mapping(source = "mfaEnable", target = "mfaEnabled")
+    @Mapping(source = "mfaEnabled", target = "mfaEnabled")
     UsuarioResponse toUsuarioResponse(Usuario usuario);
 
 }
