@@ -1,7 +1,6 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.config.security;
 
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.UsuarioRepositoryPort;
-import com.salondebelleza.salondebelleza.agendamiento.infrastructure.config.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -21,7 +21,6 @@ public class RegistrarUsuarioEmpleadoUseCase {
     private final EmpleadoRepositoryPort empleadoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final PasswordEncoder passwordEncoder;
-    private final EmpleadoMapper empleadoMapper;
 
     private static final String DEFAULT_ROL = "RECEPTIONIST";
 
