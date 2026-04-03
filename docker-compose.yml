@@ -12,5 +12,12 @@ services:
       - postgres_data:/var/lib/postgresql
     restart: always
 
+  redis:
+    image: 'redis:8.6.2'
+    container_name: salon_redis_dev
+    ports:
+      - "6379:6379"
+    restart: always
+
 volumes:
   postgres_data:
