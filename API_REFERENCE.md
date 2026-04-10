@@ -922,6 +922,40 @@ Consulta horarios disponibles para agendar.
 
 ---
 
+### 9️⃣ DashboardController (`/dashboard`)
+
+**Protegido: OWNER solamente**
+
+#### `GET /api/v1/dashboard?fechaInicio=...&fechaFin=...`
+
+Genera métricas operativas y top de servicios realizados en el rango solicitado.
+
+**Query Parameters:**
+- `fechaInicio` (ISO-8601 datetime, obligatorio, ejemplo `2026-04-01T00:00:00`)
+- `fechaFin` (ISO-8601 datetime, obligatorio, ejemplo `2026-04-30T23:59:59`)
+
+**Response 200:**
+```json
+{
+  "rendimiento": {
+    "totalCitas": 42,
+    "completadas": 30,
+    "canceladas": 8,
+    "tasaCompletitud": 71.43
+  },
+  "serviciosTop": [
+    {
+      "nombreServicio": "Corte de cabello",
+      "cantidadRealizada": 15
+    }
+  ]
+}
+```
+
+**Errores:** 403, 500
+
+---
+
 ## DTOs Detallados
 
 ### Request DTOs
@@ -1072,6 +1106,24 @@ Consulta horarios disponibles para agendar.
   "idEmpleado": 5,
   "nombreUsuario": "maria_lopez",
   "rol": "RECEPTIONIST"
+}
+```
+
+#### DashboardResponse
+```json
+{
+  "rendimiento": {
+    "totalCitas": 42,
+    "completadas": 30,
+    "canceladas": 8,
+    "tasaCompletitud": 71.43
+  },
+  "serviciosTop": [
+    {
+      "nombreServicio": "Corte de cabello",
+      "cantidadRealizada": 15
+    }
+  ]
 }
 ```
 

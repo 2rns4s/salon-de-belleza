@@ -293,6 +293,7 @@ docker run -p 8080:8080 --env-file .env salon-belleza:0.0.1
 | GET | `/api/v1/citas` | Listar citas | ✅ |
 | POST | `/api/v1/citas` | Crear cita | ✅ |
 | GET | `/api/v1/disponibilidad` | Consultar horarios libres | ✅ |
+| GET | `/api/v1/dashboard` | Dashboard operativo por rango de fechas | ✅ OWNER |
 | POST | `/api/v1/usuarios` | Crear usuario | ✅ OWNER |
 
 **Base URL:** `http://localhost:8080/api/v1`
