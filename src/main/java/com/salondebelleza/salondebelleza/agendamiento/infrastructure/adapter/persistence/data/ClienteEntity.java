@@ -1,5 +1,6 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data;
 
+import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.converter.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,9 +22,11 @@ public class ClienteEntity {
 
     private String apellido;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(unique = true, nullable = false)
     private String documento;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(unique = true, nullable = false)
     private String telefono;
 }
