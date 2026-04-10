@@ -1,5 +1,7 @@
 package com.salondebelleza.salondebelleza.agendamiento.domain.port;
 
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.reporte.EstadoCitaCountDTO;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.reporte.ServicioTopDTO;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.Cita;
 
 import java.time.LocalDateTime;
@@ -25,5 +27,9 @@ public interface CitaRepositoryPort {
     List<Cita> findAllByRangoFecha(LocalDateTime inicioDia, LocalDateTime finDia);
 
     List<Cita> findAllByRangoFechaAndEmpleado(LocalDateTime inicioDia, LocalDateTime finDia, Long idEmpleado);
+
+    List<EstadoCitaCountDTO> contarCitasPorEstadoEnRango(LocalDateTime inicio, LocalDateTime fin);
+
+    List<ServicioTopDTO> encontrarTopServiciosRealizados(LocalDateTime inicio, LocalDateTime fin, int limit);
 }
 

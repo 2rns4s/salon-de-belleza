@@ -1,11 +1,14 @@
 package com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence;
 
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.reporte.EstadoCitaCountDTO;
+import com.salondebelleza.salondebelleza.agendamiento.application.dto.reporte.ServicioTopDTO;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.Cita;
 import com.salondebelleza.salondebelleza.agendamiento.domain.port.CitaRepositoryPort;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.data.CitaEntity;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.mapper.CitaMapper;
 import com.salondebelleza.salondebelleza.agendamiento.infrastructure.adapter.persistence.repository.CitaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,5 +86,15 @@ public class CitaPersistenceAdapter implements CitaRepositoryPort {
                 .stream()
                 .filter(c -> c.getIdEmpleado().equals(idEmpleado))
                 .toList();
+    }
+
+    @Override
+    public List<EstadoCitaCountDTO> contarCitasPorEstadoEnRango(LocalDateTime inicio, LocalDateTime fin) {
+        return this.citaRepository.contarCitasPorEstadoEnRango(inicio, fin);
+    }
+
+    @Override
+    public List<ServicioTopDTO> encontrarTopServiciosRealizados(LocalDateTime inicio, LocalDateTime fin, int limit) {
+        return this.citaRepository.encontrarTopServiciosRealizados(inicio, fin, PageRequest.of(0, limit));
     }
 }
