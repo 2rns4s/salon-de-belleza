@@ -7,7 +7,7 @@
 **Swagger UI:** `http://localhost:8080/swagger-ui.html`  
 **OpenAPI JSON:** `http://localhost:8080/v3/api-docs`
 
-**Última actualización:** Abril 2026
+**Última actualización:** Octubre 2026
 
 ---
 
@@ -771,6 +771,7 @@ Crea cita con validaciones automáticas.
 ```
 
 **Validaciones automáticas:**
+- ✅ Cliente existente en el sistema
 - ✅ Empleado activo y calificado para servicio
 - ✅ Empleado trabajando en ese horario (franja laboral)
 - ✅ Sin solapamiento con otras citas
@@ -778,7 +779,8 @@ Crea cita con validaciones automáticas.
 - ✅ Fecha futura válida
 
 **Response 201:** Cita creada (fechaFin calculada automáticamente)  
-**Errores:** 400, 404, 409, 500
+**Notificación:** Disparo asíncrono de SMS de confirmación al teléfono del cliente (+57) vía Twilio tras commit exitoso de la transacción.  
+**Errores:** 400, 404 (Cliente no encontrado), 409, 500
 
 ---
 

@@ -3,7 +3,7 @@
 ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-blue?style=flat-square) 
 ![Flyway](https://img.shields.io/badge/Migraciones-Flyway-brightgreen?style=flat-square)
 
-**Última actualización:** Abril 2026
+**Última actualización:** Octubre 2026
 
 ---
 
@@ -54,11 +54,12 @@ src/main/resources/db/migration/
 | **V4** | `V4__crear_tabla_empleados_franjas_laborales_y_calificaciones.sql` | `empleados`<br>`franjas_laborales`<br>`calificaciones` | Personal, horarios, skills |
 | **V5** | `V5__crear_tabla_citas_y_detalle_recursos.sql` | `citas`<br>`citas_recursos` | Agendamientos + asignación de recursos |
 | **V6** | `V6__seguridad_avanzada.sql` | `usuarios` | Autenticación, JWT, MFA |
+| **V8** | `V8__ampliar_columnas_cifrado_clientes.sql` | `clientes` (ALTER) | Ampliación de columnas `documento` y `telefono` a `VARCHAR(255)` para cifrado AES en BD |
 
 **Ejecución automática:**
 - Al iniciar la aplicación con `./gradlew bootRun`
 - En tests si usa `testcontainers`
-- Respeta orden: V1 → V2 → ... → V6
+- Respeta orden: V1 → V2 → ... → V6 → V8
 
 ### Agregar Nueva Migración
 
@@ -91,8 +92,8 @@ CREATE TABLE clientes (
     id_cliente SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    documento VARCHAR(10) NOT NULL UNIQUE,
-    telefono VARCHAR(10),
+    documento VARCHAR(255) NOT NULL UNIQUE,
+    telefono VARCHAR(255),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -102,8 +103,8 @@ CREATE TABLE clientes (
 | `id_cliente` | SERIAL | PK, auto-incremento |
 | `nombre` | VARCHAR(100) | Requerido |
 | `apellido` | VARCHAR(100) | Requerido |
-| `documento` | VARCHAR(10) | UNIQUE, 8-10 dígitos |
-| `telefono` | VARCHAR(10) | Formato: 3xxxxxxxxx |
+| `documento` | VARCHAR(255) | UNIQUE, almacena texto cifrado AES en Base64 (original: 8-10 dígitos) |
+| `telefono` | VARCHAR(255) | Almacena texto cifrado AES en Base64 (original: 3xxxxxxxxx) |
 | `fecha_registro` | TIMESTAMP | Auto, por defecto NOW() |
 
 ---
@@ -535,6 +536,6 @@ VACUUM ANALYZE;
 
 ---
 
-**Última actualización:** Abril 2026 | **Versión:** 0.0.1-SNAPSHOT
+**Última actualización:** Octubre 2026 | **Versión:** 0.0.1-SNAPSHOT
 
 

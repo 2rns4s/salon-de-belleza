@@ -2,7 +2,7 @@
 
 ![Java 21](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk) ![Spring Boot 3.5.7](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen?style=flat-square&logo=spring-boot) ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-blue?style=flat-square&logo=postgresql) ![Hexagonal](https://img.shields.io/badge/Architecture-Hexagonal-purple?style=flat-square)
 
-**Última actualización:** Abril 2026 | **Versión:** 0.0.1-SNAPSHOT
+**Última actualización:** Octubre 2026 | **Versión:** 0.0.1-SNAPSHOT
 
 ---
 
@@ -94,7 +94,7 @@ La capa más importante: contiene la lógica de negocio pura, SIN dependencias d
 | **ServicioRecursos** | Relación M:N | Recursos requeridos por servicio |
 | **CitaRecursos** | Relación M:N | Recursos asignados a cada cita |
 
-#### Puertos (Interfaces - 6 puertos)
+#### Puertos (Interfaces - 7 puertos)
 
 Definen contratos que DEBEN implementar los adaptadores:
 
@@ -110,19 +110,21 @@ public interface ClienteRepositoryPort {
 ```
 
 **Puertos en el sistema:**
-- `CitaRepositoryPort`
-- `ClienteRepositoryPort`
-- `EmpleadoRepositoryPort`
-- `RecursoRepositoryPort`
-- `ServicioRepositoryPort`
-- `UsuarioRepositoryPort`
+- `CitaRepositoryPort` (Persistencia de citas)
+- `ClienteRepositoryPort` (Persistencia de clientes)
+- `EmpleadoRepositoryPort` (Persistencia de empleados)
+- `RecursoRepositoryPort` (Persistencia de recursos)
+- `ServicioRepositoryPort` (Persistencia de servicios)
+- `UsuarioRepositoryPort` (Persistencia de usuarios)
+- `NotificacionEventPort` (Puerto para publicación de eventos de notificación)
 
-#### Excepciones de Negocio (16 excepciones)
+#### Excepciones de Negocio (17 excepciones)
 
 Representan errores de lógica de negocio (NO técnicos):
 
 ```
 ✓ ClienteNoEncontradoException (404)
+✓ ClienteNoExistenteException (404)
 ✓ ClienteExistenteException (409)
 ✓ EmpleadoNoExistenteException (404)
 ✓ EmpleadoExistenteException (409)
@@ -210,6 +212,17 @@ Response DTOs (ClienteResponse, EmpleadoResponse, etc.)
 - Validación en entrada
 - Ocultamiento de campos internos
 - Versionado de API independiente
+
+#### Eventos de Aplicación (Events)
+
+Representan sucesos relevantes en el ciclo de vida del negocio:
+
+- **`CitaConfirmadaEvent`:** Record inmutable disparado cuando una cita es agendada exitosamente:
+  - `idCita: Long`
+  - `telefonoCliente: String`
+  - `nombreCliente: String`
+  - `nombreServicio: String`
+  - `fechaHoraCita: String`
 
 #### Mappers (6 mappers)
 
@@ -300,10 +313,20 @@ ClienteRepository extends JpaRepository<ClienteData, Long>
 - `JwtService.java` - Genera/valida tokens JWT
 - `ApplicationConfig.java` - Beans de Spring
 
-**Integración:**
+**Integración y Async:**
 - `OpenApiConfig.java` - Swagger/OpenAPI
 - `TotpConfig.java` - MFA con TOTP
 - `RedisConfig.java` - Cache distribuido
+- `AsyncConfig.java` - Soporte asíncrono (@EnableAsync)
+
+#### Adaptadores de Eventos y Notificaciones
+
+- **`SpringEventPublisherAdapter.java`:** Implementa `NotificacionEventPort` publicando eventos mediante `ApplicationEventPublisher`.
+- **`TwilioSmsNotificationListener.java`:** Listener asíncrono (`@Async`, `@TransactionalEventListener(phase = AFTER_COMMIT)`) que escucha `CitaConfirmadaEvent` y envía un SMS al cliente con la confirmación mediante Twilio (+57).
+
+#### Conversores de Cifrado (Persistence Converters)
+
+- **`CryptoConverter.java`:** Implementa `AttributeConverter<String, String>` con cifrado simétrico AES y codificación Base64 para columnas sensibles (`documento`, `telefono`).
 
 #### Manejo de Excepciones
 
@@ -333,7 +356,7 @@ Exception (genérica) → 500 INTERNAL_SERVER_ERROR
 | **Mapper** | MapStruct automático | Conversión sin boilerplate |
 | **Dependency Injection** | Constructor injection | Inyección clara de dependencias |
 | **Strategy** | Validaciones en UseCases | Lógica flexible, testeable |
-| **Observer** | Spring Events (opcional) | Desacoplamiento de eventos |
+| **Observer / Events** | Spring Events + Twilio | Desacoplamiento de notificaciones asíncronas SMS (AFTER_COMMIT) |
 
 ---
 
@@ -357,7 +380,8 @@ Exception (genérica) → 500 INTERNAL_SERVER_ERROR
    - @Valid valida anotaciones (no nulo, etc.)
 
 3. CrearCitaUseCase.execute()
-   - Obtiene Cliente, Empleado, Servicio via Ports
+   - Valida que el Cliente existe previamente via ClienteRepositoryPort (o lanza ClienteNoExistenteException)
+   - Bloquea Empleado con lock pesimista para evitar carreras
    - Valida que Empleado está activo
    - Valida que Empleado está calificado para Servicio
    - Valida que fecha está en franja laboral del Empleado
@@ -366,6 +390,7 @@ Exception (genérica) → 500 INTERNAL_SERVER_ERROR
    - Calcula fechaFin = fechaInicio + duracionServicio
    - Crea nueva entidad Cita
    - Asigna recursos via CitaRecursos
+   - Publica CitaConfirmadaEvent mediante NotificacionEventPort
 
 4. CitaPersistenceAdapter.guardar()
    - Mapea Cita (Domain) → CitaData (JPA)
@@ -376,6 +401,11 @@ Exception (genérica) → 500 INTERNAL_SERVER_ERROR
 5. Mapper: CitaData → Cita (Domain) → CitaResponse
 
 6. RESPONSE: 201 Created
+   (El cliente HTTP recibe respuesta inmediata)
+
+7. Evento Asíncrono (Post-Commit):
+   - TwilioSmsNotificationListener recibe CitaConfirmadaEvent tras confirmarse la transacción
+   - Envía SMS automático vía Twilio al teléfono del cliente (+57) de forma asíncrona
    Body: {
      "idCita": 100,
      "idCliente": 1,

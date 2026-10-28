@@ -6,7 +6,7 @@
 ![Hexagonal](https://img.shields.io/badge/Architecture-Hexagonal-purple?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Development-yellow?style=flat-square)
 
-**Última actualización:** Abril 2026 | **Versión:** 0.0.1-SNAPSHOT
+**Última actualización:** Octubre 2026 | **Versión:** 0.0.1-SNAPSHOT
 
 API REST profesional con **Arquitectura Hexagonal** para la gestión integral de salones de belleza: clientes, empleados, servicios, recursos, citas y autenticación JWT + MFA.
 
@@ -75,8 +75,13 @@ docker-compose up -d
 - **JWT (JSON Web Tokens):** Autenticación stateless
 - **MFA (Multi-Factor Authentication):** TOTP con Google Authenticator
 - **BCrypt:** Encriptación de contraseñas
+- **Cifrado en BD (AES-256):** Cifrado transparente para PII sensible (documento y teléfono de clientes)
 - **Spring Security:** Autorización basada en roles (OWNER, RECEPTIONIST)
 - **Soft Delete:** Eliminación lógica para auditoría
+
+### 🔔 Notificaciones
+- **SMS Automático (Twilio):** Envío asíncrono de confirmaciones al teléfono del cliente tras agendar cita
+- **Event-Driven Architecture:** Eventos desacoplados ejecutados tras el commit de transacción (AFTER_COMMIT)
 
 ### 📊 Gestión Completa
 - **Clientes:** Registro, búsqueda, historial de citas
@@ -132,6 +137,7 @@ docker-compose up -d
 - **MapStruct 1.6.3** - Mapeo automático DTO ↔ Entity
 - **jjwt (0.13.0)** - Generación/validación de JWT
 - **TOTP (1.7.1)** - MFA con códigos TOTP
+- **Twilio SDK (11.3.6)** - Integración de notificaciones SMS
 - **Lombok** - Reducción de boilerplate (@Getter, @Setter)
 
 ### Documentación & Testing
@@ -153,25 +159,28 @@ SalonDeBelleza/
 │   │   │   └── agendamiento/
 │   │   │       ├── domain/                    # ⭐ LÓGICA DE NEGOCIO PURA
 │   │   │       │   ├── entities/              # 10 entidades del dominio
-│   │   │       │   ├── port/                  # 6 interfaces (Ports)
-│   │   │       │   ├── exception/             # 16 excepciones de negocio
+│   │   │       │   ├── port/                  # 7 interfaces (Repository Ports + NotificacionEventPort)
+│   │   │       │   ├── exception/             # 17 excepciones de negocio
 │   │   │       │   └── valueobjects/          # FranjaLaboral, Rol
 │   │   │       │
 │   │   │       ├── application/               # 🎯 CASOS DE USO (ORQUESTACIÓN)
 │   │   │       │   ├── usecase/               # 36 UseCases organizados por módulo
+│   │   │       │   ├── event/                 # CitaConfirmadaEvent
 │   │   │       │   ├── dto/                   # Request/Response DTOs
 │   │   │       │   └── mapper/                # 6 mappers (DTO ↔ Entity)
 │   │   │       │
 │   │   │       └── infrastructure/            # 🔌 IMPLEMENTACIÓN
 │   │   │           ├── adapter/
 │   │   │           │   ├── web/               # 9 Controllers (REST)
-│   │   │           │   └── persistence/       # 6 Adapters + JPA Repos
-│   │   │           └── config/                # Security, OpenAPI, TOTP
+│   │   │           │   ├── persistence/       # 6 Adapters + JPA Repos + CryptoConverter
+│   │   │           │   ├── notification/      # TwilioSmsNotificationListener
+│   │   │           │   └── event/             # SpringEventPublisherAdapter
+│   │   │           └── config/                # Security, OpenAPI, TOTP, AsyncConfig
 │   │   │
 │   │   └── resources/
 │   │       ├── application.properties         # Config principal
 │   │       ├── application-test.properties    # Config tests
-│   │       └── db/migration/                  # 6 migraciones Flyway (V1-V6)
+│   │       └── db/migration/                  # Migraciones Flyway (V1-V6, V8)
 │   │
 │   └── test/
 │       └── java/com/salondebelleza/salondebelleza/

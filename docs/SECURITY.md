@@ -2,7 +2,7 @@
 
 ![Security](https://img.shields.io/badge/Security-JWT%2BMFA-brightgreen?style=flat-square)
 
-**Última actualización:** Abril 2026
+**Última actualización:** Octubre 2026
 
 ---
 
@@ -405,6 +405,69 @@ Guardar en variable de entorno (NO en código):
 export SECURITY_JWT_SECRET_KEY="tu-clave-super-secreta-de-256-bits"
 ```
 
+### Cifrado de Datos en Reposo (Base de Datos - PII)
+
+Para proteger datos personales sensibles (PII) de los clientes, las columnas `documento` y `telefono` se almacenan cifradas en PostgreSQL utilizando **AES (AES/ECB/PKCS5Padding)** con codificación Base64.
+
+#### Implementación con JPA AttributeConverter
+
+Se utiliza la clase `CryptoConverter` (`@Converter`) que intercepta de forma transparente las operaciones de persistencia y lectura en la base de datos:
+
+```java
+@Converter
+@Component
+public class CryptoConverter implements AttributeConverter<String, String> {
+
+    private static final String ALGORITHM = "AES/ECB/PKCS5Padding";
+    private static byte[] KEY;
+
+    @Value("${security.db.encryption.key}")
+    public void setKey(String key) {
+        KEY = key.getBytes();
+    }
+
+    @Override
+    public String convertToDatabaseColumn(String datoEnTextoPlano) {
+        // Cifra con AES y retorna Base64
+    }
+
+    @Override
+    public String convertToEntityAttribute(String datoEnTextoCifrado) {
+        // Decodifica Base64 y descifra con AES
+    }
+}
+```
+
+#### Aplicación en Entidades (`ClienteEntity`)
+
+```java
+@Convert(converter = CryptoConverter.class)
+@Column(unique = true, nullable = false, length = 255)
+private String documento;
+
+@Convert(converter = CryptoConverter.class)
+@Column(unique = true, nullable = false, length = 255)
+private String telefono;
+```
+
+#### Migración de Esquema (Flyway V8)
+
+Dado que el texto cifrado resultante en Base64 supera la longitud de los datos en texto plano (ej: 8-10 caracteres), la migración `V8__ampliar_columnas_cifrado_clientes.sql` expande las columnas a `VARCHAR(255)`:
+
+```sql
+ALTER TABLE clientes
+    ALTER COLUMN documento TYPE VARCHAR(255),
+    ALTER COLUMN telefono TYPE VARCHAR(255);
+```
+
+#### Clave de Cifrado
+
+Configurable vía `application.properties` o variable de entorno (`SECURITY_DB_ENCRYPTION_KEY`):
+
+```properties
+security.db.encryption.key=EstaEsUnaClaveSecretaDe32Bytes!!
+```
+
 ### HTTPS/TLS
 
 En producción, SIEMPRE usar HTTPS:
@@ -593,6 +656,6 @@ SELECT * FROM empleados WHERE activo = true;
 
 ---
 
-**Última actualización:** Abril 2026 | **Versión:** 0.0.1-SNAPSHOT
+**Última actualización:** Octubre 2026 | **Versión:** 0.0.1-SNAPSHOT
 
 

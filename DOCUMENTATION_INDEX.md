@@ -25,4 +25,4 @@ Documentacion complementaria en `docs/`:
 
 Este indice omite archivos eliminados para evitar enlaces rotos.
 
-Ultima actualizacion: Abril 2026
+Ultima actualizacion: Octubre 2026

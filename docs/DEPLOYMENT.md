@@ -3,7 +3,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue?style=flat-square)
 ![Production](https://img.shields.io/badge/Environment-Production%2FDev-brightgreen?style=flat-square)
 
-**Última actualización:** Abril 2026
+**Última actualización:** Octubre 2026
 
 ---
 
@@ -347,6 +347,10 @@ export SPRING_DATASOURCE_URL=jdbc:postgresql://db.prod.com:5432/salon_db
 export SPRING_DATASOURCE_USERNAME=salon_prod_user
 export SPRING_DATASOURCE_PASSWORD=<super-secure-password>
 export SECURITY_JWT_SECRET_KEY=<256-bit-key-generado-aleatoriamente>
+export SECURITY_DB_ENCRYPTION_KEY=<clave-secreta-32-bytes-para-cifrado-bd>
+export TWILIO_ACCOUNT_SID=<twilio-account-sid>
+export TWILIO_AUTH_TOKEN=<twilio-auth-token>
+export TWILIO_PHONE_NUMBER=<twilio-phone-number>
 export SERVER_SSL_ENABLED=true
 export SERVER_SSL_KEYSTORE_PATH=/app/keystore.jks
 export SERVER_SSL_KEYSTORE_PASSWORD=<keystore-password>
@@ -581,6 +585,6 @@ psql -U salon_admin -d salon_de_belleza_db < backup_anterior.sql
 
 ---
 
-**Última actualización:** Abril 2026 | **Versión:** 0.0.1-SNAPSHOT
+**Última actualización:** Octubre 2026 | **Versión:** 0.0.1-SNAPSHOT
 
 
