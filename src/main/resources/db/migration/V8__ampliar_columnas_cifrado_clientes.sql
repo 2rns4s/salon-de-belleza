@@ -1,0 +1,3 @@
+ALTER TABLE clientes
+    ALTER COLUMN documento TYPE VARCHAR(255),
+    ALTER COLUMN telefono TYPE VARCHAR(255);

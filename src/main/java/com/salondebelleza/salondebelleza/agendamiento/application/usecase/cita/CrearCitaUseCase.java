@@ -2,13 +2,11 @@ package com.salondebelleza.salondebelleza.agendamiento.application.usecase.cita;
 
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CitaResponse;
 import com.salondebelleza.salondebelleza.agendamiento.application.dto.cita.CrearCitaRequest;
+import com.salondebelleza.salondebelleza.agendamiento.application.event.CitaConfirmadaEvent;
 import com.salondebelleza.salondebelleza.agendamiento.application.mapper.CitaDTOMapper;
 import com.salondebelleza.salondebelleza.agendamiento.domain.entities.*;
 import com.salondebelleza.salondebelleza.agendamiento.domain.exception.*;
-import com.salondebelleza.salondebelleza.agendamiento.domain.port.CitaRepositoryPort;
-import com.salondebelleza.salondebelleza.agendamiento.domain.port.EmpleadoRepositoryPort;
-import com.salondebelleza.salondebelleza.agendamiento.domain.port.RecursoRepositoryPort;
-import com.salondebelleza.salondebelleza.agendamiento.domain.port.ServicioRepositoryPort;
+import com.salondebelleza.salondebelleza.agendamiento.domain.port.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +25,8 @@ public class CrearCitaUseCase {
     private final RecursoRepositoryPort recursoRepositoryPort;
     private final ServicioRepositoryPort servicioRepositoryPort;
     private final EmpleadoRepositoryPort empleadoRepositoryPort;
+    private final ClienteRepositoryPort clienteRepositoryPort;
+    private final NotificacionEventPort notificacionEventPort;
 
     private final LocalTime horaInicioSalon;
     private final LocalTime horaFinSalon;
@@ -37,6 +37,8 @@ public class CrearCitaUseCase {
                             RecursoRepositoryPort recursoRepositoryPort,
                             ServicioRepositoryPort servicioRepositoryPort,
                             EmpleadoRepositoryPort empleadoRepositoryPort,
+                            ClienteRepositoryPort clienteRepositoryPort,
+                            NotificacionEventPort notificacionEventPort,
                             @Value("${salon.hora-inicio-servicio}") LocalTime horaInicioSalon,
                             @Value("${salon.hora-fin-servicio}") LocalTime horaFinSalon) {
         this.citaRepositoryPort = citaRepositoryPort;
@@ -44,12 +46,17 @@ public class CrearCitaUseCase {
         this.recursoRepositoryPort = recursoRepositoryPort;
         this.servicioRepositoryPort = servicioRepositoryPort;
         this.empleadoRepositoryPort = empleadoRepositoryPort;
+        this.clienteRepositoryPort = clienteRepositoryPort;
+        this.notificacionEventPort = notificacionEventPort;
         this.horaInicioSalon = horaInicioSalon;
         this.horaFinSalon = horaFinSalon;
     }
 
     @Transactional
     public CitaResponse execute(CrearCitaRequest request) {
+
+        Cliente cliente = this.clienteRepositoryPort.findById(request.idCliente())
+                .orElseThrow(() -> new ClienteNoExistenteException("El cliente con id " + request.idCliente() + " no existe"));
 
         // PASO CRÍTICO 1: Bloquear el empleado PRIMERO para evitar race conditions
         // Esto adquiere un lock pesimista sobre la fila del empleado
@@ -103,7 +110,7 @@ public class CrearCitaUseCase {
             for (ServicioRecursos requisito : recursosOrdenados) {
 
                 // Paso A: Obtenemos el recurso base (Ej: ID 1 "Silla", Total: 5)
-                // OJO: Aquí asumimos que el servicio ya tiene vinculado el recurso real.
+                // Aquí asumimos que el servicio ya tiene vinculado el recurso real.
                 // Si 'requisito' es solo una referencia intermedia, buscamos el recurso real:
                 Recurso recursoBase = recursoRepositoryPort.findByIdRecursoWithLock(requisito.getIdRecurso())
                         .orElseThrow(() -> new RecursoNoEncontradoException("Recurso no encontrado"));
@@ -139,8 +146,20 @@ public class CrearCitaUseCase {
         nuevaCita.setEstado(EstadoCita.CONFIRMADA);
         nuevaCita.setCitaRecursos(recursosAAsignar);
 
+        CitaResponse savedCita = this.citaDTOMapper.toCitaResponse(this.citaRepositoryPort.save(nuevaCita));
+
+        notificacionEventPort.enviarCitaConfirmada(
+                new CitaConfirmadaEvent(
+                        savedCita.idCita(),
+                        cliente.getTelefono(),
+                        cliente.getNombre(),
+                        servicio.getNombre(),
+                        savedCita.fechaInicio().toString()
+                )
+        );
+
         // 5. Guardar y Retornar
-        return citaDTOMapper.toCitaResponse(citaRepositoryPort.save(nuevaCita));
+        return savedCita;
 
     }
 }

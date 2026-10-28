@@ -35,3 +35,11 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Entregas SENA (local, no rastreadas) ###
+sena/
+
+# Archivos comprimidos de backups locales
+*.7z
+*.zip
+*.tar.gz

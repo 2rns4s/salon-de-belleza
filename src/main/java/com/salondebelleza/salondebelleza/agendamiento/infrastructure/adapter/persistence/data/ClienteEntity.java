@@ -23,10 +23,10 @@ public class ClienteEntity {
     private String apellido;
 
     @Convert(converter = CryptoConverter.class)
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 255)
     private String documento;
 
     @Convert(converter = CryptoConverter.class)
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 255)
     private String telefono;
 }

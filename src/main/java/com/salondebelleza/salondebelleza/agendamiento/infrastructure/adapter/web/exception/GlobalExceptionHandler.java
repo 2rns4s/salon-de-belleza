@@ -28,8 +28,8 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
-    @ExceptionHandler(ClienteNoEncontradoException.class)
-    public ResponseEntity<ErrorResponse> handleClienteNoEncontradoException(ClienteNoEncontradoException ex) {
+    @ExceptionHandler({ClienteNoEncontradoException.class, ClienteNoExistenteException.class})
+    public ResponseEntity<ErrorResponse> handleClienteNoEncontradoException(RuntimeException ex) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
