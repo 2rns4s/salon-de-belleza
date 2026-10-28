@@ -19,7 +19,7 @@ public class TwilioSmsNotificationListener {
     private final String accountSid;
     private final String authToken;
     private final String fromPhoneNumber;
-
+    private boolean habilitado = false;
 
     public TwilioSmsNotificationListener(
             @Value("${twilio.account-sid}") String accountSid,
@@ -32,15 +32,33 @@ public class TwilioSmsNotificationListener {
 
     @PostConstruct
     public void init() {
-        Twilio.init(accountSid, authToken);
-        log.info("Twilio inicializado correctamente");
+        if (accountSid == null || accountSid.isBlank() || accountSid.contains("XXXX") ||
+                authToken == null || authToken.isBlank() || authToken.contains("your_auth_token")) {
+            log.warn("Twilio no está configurado con credenciales válidas en las variables de entorno. Las notificaciones SMS estarán deshabilitadas.");
+            this.habilitado = false;
+            return;
+        }
+
+        try {
+            Twilio.init(accountSid, authToken);
+            this.habilitado = true;
+            log.info("Twilio inicializado correctamente");
+        } catch (Exception e) {
+            log.error("Error al inicializar cliente Twilio: {}", e.getMessage());
+            this.habilitado = false;
+        }
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCitaConfirmadaEvent(CitaConfirmadaEvent event) {
+        if (!habilitado) {
+            log.info("Notificación SMS omitida para cita ID {}: Twilio no está habilitado o configurado.", event.idCita());
+            return;
+        }
+
         try {
-            log.info("Enviando SMS de confirmación via SMS para cita ID: {}", event.idCita());
+            log.info("Enviando SMS de confirmación vía Twilio para cita ID: {}", event.idCita());
 
             String telefonoDestino = event.telefonoCliente();
 
@@ -63,7 +81,7 @@ public class TwilioSmsNotificationListener {
 
             log.info("SMS enviado exitosamente para cita ID {}: SID del mensaje {}", event.idCita(), mensaje.getSid());
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error al enviar SMS para la cita confirmada con id {}: {}", event.idCita(), e.getMessage());
         }
     }

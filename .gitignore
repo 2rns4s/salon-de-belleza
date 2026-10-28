@@ -43,3 +43,8 @@ sena/
 *.7z
 *.zip
 *.tar.gz
+
+# Environment variables (credenciales locales)
+.env
+.env.local
+.env.*.local

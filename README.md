@@ -325,17 +325,19 @@ Proyecto educativo SENA 2026. Licencia educativa - Uso académico autorizado.
 - ✅ Arquitectura Hexagonal completa
 - ✅ CRUD completo (8 entidades)
 - ✅ Autenticación JWT + MFA (TOTP)
+- ✅ Cifrado en BD (AES-256)
+- ✅ Notificaciones automáticas por SMS (Twilio)
 - ✅ Validaciones automáticas de citas
 - ✅ Swagger/OpenAPI
 - ✅ Tests de integración
 - ✅ Docker + docker-compose
 
 **Próximas mejoras:**
-- [ ] Notificaciones por email
+- [x] Notificaciones por SMS (Twilio)
 - [ ] Reporte de ingresos
 
 ---
 
 **¡Gracias por usar Salón de Belleza API!** 💇‍♀️✨
 
-Última actualización: Abril 2026
+Última actualización: Octubre 2026

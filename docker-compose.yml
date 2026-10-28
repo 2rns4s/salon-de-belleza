@@ -3,20 +3,20 @@ services:
     image: 'postgres:17'
     container_name: salon_db_dev
     environment:
-      POSTGRES_DB: salon_de_belleza_db
-      POSTGRES_USER: salon_admin
-      POSTGRES_PASSWORD: salon_password
+      POSTGRES_DB: ${POSTGRES_DB:-salon_de_belleza_db}
+      POSTGRES_USER: ${POSTGRES_USER:-salon_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-salon_password}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     restart: always
 
   redis:
     image: 'redis:8.6.2'
     container_name: salon_redis_dev
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     restart: always
 
 volumes:
